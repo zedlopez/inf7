@@ -11,13 +11,11 @@ module Inf7
     @tmpl = File.join(@dir, 'tmpl')
     @data = File.join(xdg.data_home, Inf7::Appname)
     @doc = File.join(@data, 'doc')
-    @cache = File.join(xdg.cache_home, Inf7::Appname)
-    @doc_cache = File.join(@cache,'doc')
-    [ @doc, @doc_cache, @tmpl ].each {|d| FileUtils.mkdir_p(d) }
+    [ @doc, @tmpl ].each {|d| FileUtils.mkdir_p(d) }
     @file = File.join(@dir, 'inf7.yml')
     @conf = YAML.load(File.read(@file)) if File.exist?(@file)
     class << self
-      attr_reader :dir, :file, :conf, :data, :cache, :doc, :doc_cache, :tmpl
+      attr_reader :dir, :file, :conf, :data, :doc, :tmpl
       def [](x)
         raise RuntimeError.new("You must run setup first") unless File.exist?(@file)
         @conf[x]

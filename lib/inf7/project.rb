@@ -321,15 +321,6 @@ module Inf7
         outfile = File.join(ext_doc_dir, the_end)
         transform_html(path, outfile)
       end
-      # Find.find(File.join(opt(:external),'Documentation')) do |path|
-      #   next unless path.end_with?('.html')
-      #   relative_end = path.gsub(%r{^#{File.join(opt(:external),'Documentation')}/},'')
-      #   next if 'Extensions.html' == relative_end
-      #     filename = File.join(@index_root, 'doc', relative_end)
-      #     FileUtils.mkdir_p(File.dirname(filename))
-      #     Inf7::Template.write(:extension_iframe, filename, index_root: @index_root, url: "file://#{Inf7::Conf.doc_cache}/#{relative_end}")
-      # end
-#      FileUtils.cp(File.join(Inf7::Conf.doc_cache,'Extensions.html'), File.join(@index_root, 'doc', 'Extensions.html'))
       Find.find(@dir.join('Index')) do |path|
         next unless path.match(/(Index\/.*\.html)\Z/)
         transform_html(path, File.join(@index_root,$1))

@@ -127,12 +127,9 @@ TODO example command
 inf7 stores info in:
 
 - $XDG_CONFIG_HOME/inf7 (or $HOME/.config/inf7 if XDG_CONFIG_HOME isn't specified)
-- $XDG_CACHE_HOME/inf7 (or $HOME/.cache/inf7 if XDG_CACHE_HOME isn't specified)
 - $XDG_DATA_HOME/inf7  (or $HOME/.local/share/inf7 if XDG_DATA_HOME isn't specified)
 
 The principal file in the config dir is inf7.yml, which stores the info you specified in your setup. As a YAML file, it's human-readable and (with care) human-editable; editing the file is the only way to change your setup. The config dir also contains a tmpl directory (more on this later).
-
-The cache dir contains inf7's rewritten versions of the contents of the external directory's Documentation dir. These are updated as necessary on every compile. (You won't interact with these files directly; they're copied to your project after compilation.)
 
 The data dir contains inf7's rewritten version of the Inform 7 documentation. This is normally created just once on setup, but the doc subcommand regenerates it if desired.
 
