@@ -1,0 +1,206 @@
+#!/usr/bin/env ruby
+require 'inf7'
+require 'optimist'
+
+class Inf
+  Commands = { "setup" => "Set up inf7 environment (do this first)",
+               "init" => "Initialize project",
+               "compile" => "Compile project",
+               "settings" => "See project settings",
+               "set" => "Modify project settings",
+               "install" => "Install extension for project",
+               "ext" => "Create extension for project",
+               "fake" => "Create a fake equivalent to a project",
+               "doc" => "Regenerate documentation",
+               "epub" => "Create epub"
+             }
+  
+  attr_reader :main_opts, :command, :subopts
+  def initialize
+    @subopts = nil
+    @command = nil
+    @main_opts = Optimist::options do
+      version "#{Inf7::VERSION}"
+      banner "Usage:"
+      banner "  #{File.basename($0)} [options] [command] [command options] [project]"
+      banner "Options:"
+      opt :version, "print version and exit", short: :none
+      opt :help, "show help", short: '-h'
+      
+      stop_on Commands.keys
+      banner "\nCommands:"
+      Commands.each { |cmd, desc| banner format("  %-10s %s", cmd, desc) }
+    end
+    @command = (ARGV.empty? or !Commands.member?(ARGV.first)) ? 'compile' : ARGV.shift
+    Optimist.die "unknown subcommand" unless Commands.key?(@command)
+    Optimist.die("You must run setup first") if ('setup' != @command) and !Inf7::Conf.conf
+    self.send("opt_#{@command}")
+  end
+
+  def opt_setup # parse delete options
+    # no defaults: only set what user specifies; anything else will get default value anyway
+    @subopts = Optimist::options do
+      banner "Options for setup"
+      opt :author, "Author's name", type: :string, short: '-a'
+      opt :internal, "Inform internal directory", type: :string, short: :none, required: true
+      opt :external, "Inform external directory", type: :string, short: :none, required: true
+      opt :i6flagstest, "I6 test flags", type: :string, short: :none
+      opt :i6flagsrelease, "I6 release flags", type: :string, short: :none
+      opt :i7flagstest, "I7 test flags", type: :string, short: :none
+      opt :i7flagsrelease, "I7 release flags", type: :string, short: :none
+      opt :cblorbflags, "cBlorb flags", type: :string, short: :none
+      opt :format, "Format (glulx or zcode)", type: :string, short: '-f'
+      opt :nobble_rng, "Use fixed seed for random number generator", short: :none
+      opt :create_blorb, "Create a blorb when compiling", short: :none
+      opt :blorbfile_basename, "Blorbfile basename", type: :string, short: :none
+      opt :ni, "Location of ni", type: :string, short: :none
+      opt :inform6, "Location of inform6", type: :string, short: :none
+      opt :cblorb, "Location of cBlorb", type: :string, short: :none
+      opt :resources, "Resource directory",  type: :string, short: :none, required: true
+      opt :docs, "Documentation directory",  type: :string, short: :none, required: true
+      opt :top, "Create another dir over .inform and .materials", short: :none
+      opt :git, "Support git", short: :none
+      opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
+    end
+    @subopts.reject! {|k,v| v.nil? or !Inf7::Project::Fields.member?(k) }
+    Optimist::die :internal, "must be Inform's internal directory" unless File.exist?(File.join(@subopts[:internal], 'Extensions', 'Graham Nelson', 'Standard Rules.i7x'))
+    Optimist::die :external, "must be a writable directory" unless Dir.exist?(@subopts[:external]) and File.writable?(@subopts[:external])
+    Inf7::Conf.create(@subopts)
+  end
+
+  def opt_compile
+    @subopts = Optimist::options do
+      banner "Options for compile"
+      opt :release, "For release", default: false, short: :none
+      opt :internal, "Inform internal directory", type: :string, short: :none
+      opt :external, "Inform external directory", type: :string, short: :none
+      opt :format, "Format (glulx or zcode)", type: :string, short: '-f'
+      opt :nobble_rng, "Use fixed seed for random number generator", default: false, short: :none
+      opt :create_blorb, "Create a blorb when compiling", default: true, short: :none
+      opt :i6flags, "I6 flags", type: :string, short: :none
+      opt :i7flags, "I7 flags", type: :string, short: :none
+      opt :cblorbflags, "cBlorb flags", type: :string, short: :none
+      opt :blorbfile_basename, "Blorbfile basename", type: :string, short: :none
+      opt :ni, "Location of ni", type: :string, short: :none
+      opt :inform6, "Location of inform6", type: :string, short: :none
+      opt :cblorb, "Location of cBlorb", type: :string, short: :none
+      opt :index, "Generate Project Index", default: true, short: :none
+      opt :force, "Always rewrite, ignoring modification time", default: false, short: :none
+      opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
+      opt :progress, "Verbose progress output", default: false
+      opt :verbose, "Verbose compilation output", default: false, short: '-v'
+    end
+    @subopts.reject! {|k,v| v.nil? or !Inf7::Project::CompileFields.member?(k) }
+    Inf7::Project[ARGV,@subopts].compile
+  end
+  def opt_init
+    @subopts = Optimist::options do
+      banner "Options for init"
+      opt :author, "Author", type: :string, short: '-a'
+      opt :format, "Format (glulx or zcode)", type: :string, short: '-f'
+      opt :nobble_rng, "Use fixed seed for random number generator", default: false, short: :none
+      opt :create_blorb, "Create a blorb when compiling", default: true, short: :none
+      opt :internal, "Inform internal directory", type: :string, short: :none
+      opt :external, "Inform external directory", type: :string, short: :none
+      opt :i6flagstest, "I6 test flags", type: :string, short: :none
+      opt :i6flagsrelease, "I6 release flags", type: :string, short: :none
+      opt :i7flagstest, "I7 test flags", type: :string, short: :none
+      opt :i7flagsrelease, "I7 release flags", type: :string, short: :none
+      opt :cblorbflags, "cBlorb flags", type: :string, short: :none
+      opt :blorbfile_basename, "Blorbfile basename", type: :string, short: :none
+      opt :ni, "Location of ni", type: :string, short: :none
+      opt :inform6, "Location of inform6", type: :string, short: :none
+      opt :cblorb, "Location of cBlorb", type: :string, short: :none
+      opt :top, "Create a dir enclosing .inform and .materials", short: :none
+      opt :git, "Support git", short: :none
+      opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
+    end
+    %i{ internal external }.each do |option|
+      Optimist::die option, "must exist if specified" if @subopts[option] and !Dir.exist?(@subopts[option])
+    end
+    @subopts.reject! {|k,v| v.nil? or !Inf7::Project::Defaults.key?(k) }
+    Inf7::Project.new(ARGV.first, @subopts)
+  end
+  def opt_settings
+    @subopts = Optimist::options do
+      banner "Options for settings"
+      opt :project, "Project-local settings", short: :none
+      opt :user, "User-wide settings", short: :none
+      opt :defaults, "Default settings", short: :none
+      opt :all, "Project, user, and default settings", short: :none
+    end.reject {|k,v| v.nil? or !%i{project user defaults all}.member?(k)}
+
+    Inf7::Project[ARGV].print_settings(@subopts)
+  end
+  def opt_set
+    @subopts = Optimist::options do
+      banner "options for set"
+      opt :internal, "Inform internal directory", type: :string, short: :none
+      opt :external, "Inform external directory", type: :string, short: :none
+      opt :author, "Author", type: :string, short: '-a'
+      opt :nobble_rng, "Use fixed seed for random number generator", short: :none
+      opt :create_blorb, "Create a blorb when compiling", default: true, short: :none
+      opt :format, "Format (glulx or zcode)", type: :string, short: '-f'
+      opt :i6flagstest, "I6 test flags", type: :string, short: :none
+      opt :i6flagsrelease, "I6 release flags", type: :string, short: :none
+      opt :i7flagstest, "I7 test flags", type: :string, short: :none
+      opt :i7flagsrelease, "I7 release flags", type: :string, short: :none
+      opt :cblorbflags, "cBlorb flags", type: :string, short: :none
+      opt :blorbfile_basename, "Blorbfile basename", type: :string, short: :none
+      opt :ni, "Location of ni", type: :string, short: :none
+      opt :inform6, "Location of inform6", type: :string, short: :none
+      opt :cblorb, "Location of cBlorb", type: :string, short: :none
+      opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
+    end
+    project = Inf7::Project[ARGV]
+    project.set(@subopts.reject {|k,v| v.nil? or !Inf7::Project::Fields.member?(k) })
+  end
+  def opt_ext
+    @subopts = Optimist::options do
+      banner "options for ext"
+      opt :author, "Author", type: :string, short: '-a'
+      opt :name, "Name", type: :string, short: :none, required: true
+      opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
+    end
+    Optimist::die :name, "not specified" unless @subopts[:name] and !@subopts[:name].strip.empty?
+    project = Inf7::Project[ARGV,@subopts.reject {|k,v| v.nil? or !%i{ author name quiet }.member?(k) }]
+    project.create_extension
+  end
+  def opt_install
+    @subopts = Optimist::options do
+      banner "options for install"
+      opt :ext, "Path of desired extension", type: :string, short: :none
+      opt :init, "Install to config, not to a project"
+      opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'    end
+    Optimist::die :ext, "not specified" unless @subopts[:ext]
+    Inf7::Project.install(@subopts, ARGV)
+  end
+  def opt_fake
+    @subopts = Optimist::options do
+      banner "options for fake"
+      opt :name, "Location for fake project dir", type: :string, short: :none
+      opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
+    end
+    project = Inf7::Project[ARGV,@subopts.reject {|k,v| v.nil?}]
+    project.fake
+  end
+
+  def opt_doc
+    @subopts = Optimist::options do
+      banner "Options for doc"
+      opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
+      opt :active, "Update js and css only", default: false
+    end
+    Inf7::Doc.create(@subopts)
+  end
+
+  def opt_epub
+    @subopts = Optimist::options do
+      banner "Create epub"
+    end
+    Inf7::Doc.epub(@subopts)
+  end
+  
+end
+
+Inf.new

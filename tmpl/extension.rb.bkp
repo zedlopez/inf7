@@ -1,0 +1,12 @@
+module Inf7
+  class Template
+    Extension = <<-EXTENSION
+<%= name.strip %> by <%= author.strip %> begins here.
+
+<%= name.strip %> ends here.
+
+---- Documentation ----
+
+EXTENSION
+  end
+end

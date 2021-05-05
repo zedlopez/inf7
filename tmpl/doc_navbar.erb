@@ -1,0 +1,10 @@
+<div class="doc-navbar">
+<div>
+<div class="doc-navbar-left"><% if prev = chapter.previous -%><a class="nav-left" href="<%== prev.url %>"><%= prev.header %></a><% else %>&nbsp;<% end -%></div>
+<div class="doc-navbar-right"><% if subsequent = chapter.subsequent -%><a class="nav-right" href="<%== subsequent.url %>"><%= subsequent.header %></a><% else %>&nbsp;<% end -%></div>
+</div>
+<div>
+<div class="doc-navbar-left"><a href="index.html">Table of Contents</a></div>
+<div class="doc-navbar-right"><a href="index.html#general-index">General Index</a></div>
+</div>
+</div>

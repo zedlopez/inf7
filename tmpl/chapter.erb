@@ -1,0 +1,25 @@
+<!doctype html>
+<meta charset="utf-8"><html lang="en"><head><title><%= chapter.volume.title %> <%= chapter.num %>. <%= chapter.title %></title><link rel="stylesheet" href="style.css"><script src="one.js"></script></head><body><main>
+<header>
+
+<div class="toc">
+<h1><%= chapter.volume.title %></h1>
+<%== Inf7::Template[:doc_navbar].render(chapter: chapter) %>
+<h2><%= chapter.header %></h2>
+<% chapter.sections.sort_by {|k,v| k }.each do |k,section| -%>
+<div class="toc-section"><%= section.chapter.num %>.<%= section.num %> <a href="<%== section.url(:chapter) %>"><%= section.title %></a></div>
+<% end -%>
+</header>
+<main>
+<section class="chapter" id="<%= chapter.href %>">
+<% chapter.sections.sort_by {|k,v| k }.each do |num,section| %>
+<%== section.to_html(:chapter) %>
+<% end %>
+</section>
+
+<footer>
+<div class="linkback"><a href="<%== chapter.sections[1].inform7link %>"><%= chapter.volume.abbrev %> Chapter <%= chapter.num %> on inform7.com</a></div>
+<%== Inf7::Template[:doc_navbar].render(chapter: chapter) %>
+</footer>
+</main></body></html>
+

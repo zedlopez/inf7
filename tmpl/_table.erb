@@ -1,0 +1,19 @@
+<div class="toc-head"><h1 class="title">Inform</h1><div class="subheading">A Design System for Interactive Fiction</div></div>
+<h2 class="title">Table of Contents</h2>
+<% volumes.each do |volume| -%>
+<details class="volume-details">
+<summary>
+<span class="toc-volume"><%= volume.title -%></span>
+</summary>
+<% volume.chapters.sort_by {|ch_k,ch_v| ch_k }.each do |chapter_num, chapter| -%>
+<details class="chapter-details">
+<summary><span class="toc-chapter"><%= chapter.header %></span></summary>
+<% chapter.sections.sort_by {|s_k,s_v| s_k }.each do |section_num,section| -%>
+<div class="toc-section"><div class="section-num"><%= section.chapter.num %>.<%= section.num %></div><div class="section-link"><a href="<%== section.url(link_format) %>"><%= section.title %></a></div></div>
+<% end -%>
+</details>
+<% end -%>
+</details>
+<% end -%>
+<% if :one == link_format %><h2 class="title"><a href="#general-index">General Index</a></h2><% end %>
+

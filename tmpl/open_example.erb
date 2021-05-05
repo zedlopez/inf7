@@ -1,0 +1,6 @@
+var links = document.getElementsByTagName('a');
+for (var i = 0; i < links.length; i++) {
+    if (links[i].href.match(/^#example-\d+/)) {
+	links[i].onClick = function() { links[i].href.match(/^#example-(\d+)$/); var example = document.getElementById($1).setAttribute('open'); return true; };
+    }
+}

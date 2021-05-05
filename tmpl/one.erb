@@ -1,0 +1,21 @@
+<!doctype html>
+<meta charset="utf-8"><html lang="en"><head><title>Inform 7</title><link rel="stylesheet" href="style.css"><script src="one.js"></script></head><body><main>
+<header>
+<%== Inf7::Template['_table'].render(volumes: volumes, link_format: :one) %>
+</header>
+<% volumes.each do |volume| %>
+<section class="volume" id="<%= volume.anchorify(volume.title) %>">
+<h1><%= volume.title %></h1>
+<% volume.chapters.sort_by {|ch_k,ch_v| ch_k }.each do |chapter_num,chapter| -%>
+<section class="chapter" id="<%= chapter.href %>">
+<h2><%= chapter.header %></h2>
+<% chapter.sections.sort_by {|s_k,s_v| s_k }.each do |section_num, section| %>
+<%== section.to_html(:one) %>
+<% end %>
+</section>
+<% end %>
+</section>
+<% end %>
+<h1 id="general-index">General Index</h1>
+<%== index %>
+</main></body></html>

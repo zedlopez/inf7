@@ -1,0 +1,36 @@
+# coding: utf-8
+module Inf7
+  class Template
+    Chapter = <<-CHAPTER
+<!doctype html>
+<meta charset="utf-8"><html lang="en"><head><title><%= chapter.volume.title %> <%= chapter.num %>. <%= chapter.title %></title><link rel="stylesheet" href="style.css"><script src="copycode.js"></script></head><body><main>
+<header>
+
+<div class="toc">
+<h1><%= chapter.volume.title %></h1>
+<h2><%= chapter.header %></h2>
+<div class="linkback"><a href="<%== chapter.sections[1].inform7link %>"><%= chapter.volume.abbrev %> Chapter <%= chapter.num %> on inform7.com</a></div>
+<% chapter.sections.sort_by {|k,v| k }.each do |k,section| -%>
+<div class="toc-section"><%= section.chapter.num %>.<%= section.num %> <%== section.link %></div>
+<% end -%>
+</header>
+<main>
+
+<%== chapter.node.to_html %>
+
+<footer>
+<div class="doc-navbar" style="width: 100%; font-family: sans-serif; font-weight: bold;">
+<div>
+<div style="float: left;"><% if prev = chapter.previous -%><a class="nav-left" href="<%== prev.url %>"><%= prev.header %></a><% end -%></div>
+<div style="text-align: right;"><% if subsequent = chapter.subsequent -%><a class="nav-right" href="<%== subsequent.url %>"><%= subsequent.header %></a><% end -%></div>
+</div>
+<div>
+<div style="float: left;"><a href="toc.html">Table of Contents</a></div>
+<div style="text-align: right;"><a href="toc.html#general-index">General Index</a></div>
+</div>
+</div>
+</footer>
+</main></body></html>
+CHAPTER
+  end
+end

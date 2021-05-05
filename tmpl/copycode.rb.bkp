@@ -1,0 +1,7 @@
+module Inf7
+  class Template
+CopyCode = <<-COPYCODE
+function copyCode(text) { navigator.clipboard.writeText(text); }
+COPYCODE
+  end
+end

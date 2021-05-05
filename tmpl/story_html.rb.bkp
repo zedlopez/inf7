@@ -1,0 +1,11 @@
+module Inf7
+  class Template
+    StoryHTML = <<-STORYHTML
+<html><head><title>Story</title><body><div><a href="Index/Welcome.html">Index</a></div><table>
+<% story.split($/).each_with_index do |line,i| %><% j = i+1 %>
+<tr><td style="text-align: right;"><%= j %></td><td id="line<%= j %>"><%= line %></td></tr>
+<% end %>
+</table></body></html>
+STORYHTML
+  end
+end

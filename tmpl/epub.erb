@@ -1,0 +1,21 @@
+<!doctype html>
+<meta charset="utf-8"><html lang="en"><head><title>Inform 7</title></head><body><main>
+<header>
+<div class="toc-volume"><a href="#general-index">General Index</a></div>
+</header>
+<% volumes.each do |volume| %>
+<section class="volume" id="<%= volume.anchorify(volume.title) %>">
+<h1><%= volume.title %></h1>
+<% volume.chapters.sort_by {|ch_k,ch_v| ch_k }.each do |chapter_num,chapter| -%>
+<section class="chapter" id="<%= chapter.href %>">
+<h2><%= chapter.header %></h2>
+<% chapter.sections.sort_by {|s_k,s_v| s_k }.each do |section_num, section| %>
+<%== section.to_html(:one, output_format) %>
+<% end %>
+</section>
+<% end %>
+</section>
+<% end %>
+<h1 id="general-index">General Index</h1>
+<%== index %>
+</main></body></html>

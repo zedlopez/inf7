@@ -1,0 +1,753 @@
+# coding: utf-8
+module Inf7
+  class Template
+Style = <<-STYLE
+import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville&display=swap');
+import url('https://fonts.googleapis.com/css2?family=Inconsolata&display=swap');
+
+html { font-size: 100%; }
+
+body {
+    color: #080808;
+background-color: #FAFAFA; 
+font-family:  "Libre Baskerville", serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  width: 42rem;
+  margin: auto;
+/*  background-image: repeating-linear-gradient(white 0px, white 1.4rem, teal 1.5rem); */
+}
+
+section { margin: 0; padding: 0 }
+
+p, ul, ol, pre, table, blockquote  {
+  margin-top: 0rem;
+  margin-bottom: 1.5rem;
+}
+ul ul, ol ol, ul ol, ol ul {
+  margin-top: 0rem;
+  margin-bottom: 0rem;
+}
+
+hr, .hr {
+  border: 1px solid;
+  margin: -1px 0;
+}
+a, b, i, strong, em, small, code {
+  line-height: 0;
+}
+sub, sup {
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+sup {
+  top: -0.5em;
+}
+sub {
+  bottom: -0.25em;
+}
+
+/*img.logo { max-width: 100%; }*/
+
+/*details.volume-details { margin-top: -.5rem }*/
+.toc h1 { text-align: center; }
+
+h1, .h1 {
+  font-size: 2.625rem;
+  line-height: 3rem;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+  text-decoration: underline;
+  text-align: center;
+/*  font-size: 4.25rem;
+  line-height: 4.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 3rem;*/
+}
+h2 {
+  font-size: 2.625rem;
+  line-height: 3rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+h3, .toc-volume {
+  font-size: 1.625rem;
+  line-height: 3rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+h4, span.toc-chapter {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0rem;
+}
+h5, .h5 {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0rem;
+}
+
+
+/*
+h1 {
+  font-size: 2.625rem;
+  line-height: 3rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+h2 {
+  font-size: 1.625rem;
+  line-height: 3rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.toc-volume {
+  font-size: 1.625rem;
+  line-height: 3rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: bold;
+}
+*/
+.toc-chapter {
+    font-size: 1.625rem;
+    line-height: 1.5;
+  font-weight: bold;
+}
+/*details.chapter-details {
+ margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}*/
+/*summary {
+    margin-bottom: 1.5rem;
+}*/
+/*
+h3 {
+  font-size: 1.625rem;
+  line-height: 3rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: normal;
+}
+*/
+div.toc-section {
+    font-size: 1.625rem;
+  line-height: 1.5;
+  margin-top: 0;
+  padding-left: 2rem;
+  margin-bottom: 0;
+}
+
+/*
+div.toc-section:last-child {
+    margin-bottom: 1.5rem;
+}
+
+div.toc-section:first-child {
+    margin-top: 1.5rem;
+}
+*/
+/*
+* + h4 { margin-bottom: 0; }
+
+h4 {
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+
+h5 {
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-top: 1.5rem;
+  margin-bottom: 0;
+}
+*/
+
+/*h5 {
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-top: 1.5rem;
+  margin-bottom: 0;
+}*/
+div.linkback { margin-top: 0; margin-bottom: 1.5rem; text-align: right; }
+
+details.chapter-details {
+    padding-left: 2rem;
+}
+
+details.full-example > div {
+    padding-top: 1.5rem;
+}
+
+div.crossreference, p, ul, ol, pre, table, blockquote {
+    margin-right: 1rem;
+    margin-left: 1rem;
+}
+/*
+h2 + div.official {  margin-top: -1.5rem; margin-bottom: -1.5rem; }
+*/
+
+/*div.official { text-align: right; display: hidden }
+p.example-p { margin-bottom: 0; }
+span.example-difficulty { color: purple; }
+*/
+table.codetable { border-collapse: collapse; width: 40rem; }
+
+
+
+/*.code,.codetable { color: #000; background-color: #E6E6E6; font-family: Go, sans-serif; padding-top: 1.5rem; padding-bottom: 1.5rem; margin-left: -1rem; margin-right: -1rem; padding-left: 1rem; padding-right: 1rem;  }*/
+div.code { background-color: #E6E6E6; color: #000;  font-family: "Go", sans-serif; margin-right: 0; margin-left: 0; margin-top: 1.5rem; margin-bottom: 1.5rem; }
+/* table.codetable { padding-top: 1.5rem; padding-bottom: 1.5rem; } */ 
+.code p { margin-left: 0; margin-right: 0; padding-left: 1rem; padding-right: 1rem; }
+
+/* * + .code { margin-bottom: 1.5rem; }
+.code + p { margin-bottom: 1.5rem; }  */
+/*p.quoted:last-child { margin-bottom: 0; }
+table.tablecode:last-child { margin-bottom: 0; }*/
+div.code > *:last-child { margin-bottom: 0; }
+
+div.code { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+
+/* .code p.quoted:last-child { margin-bottom: 0; } */
+/*div.code > table { padding-top: 1.5rem; }
+div.code > *:first-child { padding-top: 1.5rem; margin-top: 1.5rem; }
+div.code > *:last-child { padding-bottom: 1.5rem; }
+*/
+
+/*table.codetable tr:first-child { margin-top: 1.5rem; }
+table.codetable + p.quoted:first-child{ margin-top: 1.5rem; } 
+p.quoted + table.codetable { border-top: 1.5rem solid #e6e6e6; border-bottom: thin dotted #555; }
+table.codetable + p.quoted { border-top: 1.5rem solid #e6e6e6; border-bottom: thin dotted #555; }
+*/
+img.bordered { display: block; margin-left: auto; margin-right: auto; margin-top: 2rem; margin-bottom: 2rem; }
+
+
+
+/*td > p.quoted { padding: .2rem; }*/
+
+
+
+
+
+/* p.quoted { padding: .5rem;  }*/
+td.quotedtablecell { border-right: thin dotted #555; vertical-align: top; }
+td.quotedtablecell:first-child { border-left: thin dotted #555; vertical-align: top; }
+table.codetable tbody tr { border-bottom: thin dotted #555; }
+table.codetable tbody  { border-bottom: thin dotted #555; }
+table.codetable tbody tr:last-child { border-top: thin dotted #555; border-bottom: thin dotted #555; }
+table.codetable tbody tr:first-child { border-top: thin dotted #555; }
+
+/* adapted from general index css */
+
+div.indexentry span.indexgloss { color: green; font-style: italic; }
+div.indexentry span.indexsayphrase { color: blue; }
+div.indexentry a.indexlinkalt { color: gray;  font-style: italic; }
+div.indexentry span.indexphrasebracketed { color: purple; font-style: italic; }
+
+.nav-left::before { content: '← '; }
+.nav-right::after { content: ' →'; }
+
+div.indexentry a.indexlinkalt, span.indexgloss, span.indexsee, span.indexsourceargbracketed, span.indexphrasebracketed, span.indexifphrasebracketed, span.indexsayphrasebracketed, span.indexoutphrasebracketed, span.indexassertbracketed, span.indexrbbracketed, span.indexpropbracketed, span.indexpropcatbracketed, span.indexadjbracketed, span.indexrelbracketed, span.indexrelcatbracketed, span.indexglobbracketed, span.indexactvarbracketed, span.indexconstbracketed, span.indexactionbracketed, span.indexexample, span.indextitle, span.indextokenbracketed { font-style: italic; }
+
+div.indexentry { font-family: sans-serif; padding-top: .3rem; }
+
+div.indexentry span.indexsource, span.indexsourcearg, span.indexsourcepartbracketed, indexphrase, span.indexifphrase, span.indexsayphrase, span.indexoutphrase, span.indexassert, span.indexrb, span.indexprop, span.indexpropcat, span.indexadj, span.indexrelverb, span.indexglob, span.indexactvar, span.indexconst, span.indexaction, span.indexactivity, span.indexactivitycat, span.indexdescactivity, span.indexofsourcebracketed, span.indexuseopt, span.indextoken { font-family: "JetBrains Mono", monospace;  }
+
+div.indexentry span.indexcommand, indextestcmd, indexcommandpartbracketed { font-family: serif; }
+
+
+p.indexentry {
+    margin-bottom: 0; margin-top: 0; margin-right: 0; 
+}
+
+p.indent0 { font-size: 1.3rem; margin-left: 0rem; margin-top: 1rem; }
+p.indent1 { font-size: 1.1rem; margin-left: 2rem; padding-bottom: 0rem;}
+p.indent2 { margin-left: 4rem; padding-bottom: 0rem; margin-bottom: 0;}
+p.indent3 { margin-left: 6rem; padding-bottom: 0rem; margin-bottom: 0;}
+
+
+
+
+/*
+main {
+    font-size: 1.2rem;
+    line-height: 1.5;
+}
+*/
+/*
+main > * {
+    margin-left: 1.5rem;
+}
+*/
+/*
+span.toc-volume { font-size: 1.73rem; }
+span.toc-chapter { font-size: 1.44rem; }
+div.toc-section { font-size: 1.33rem; }
+span.example-summary { font-weight: bold; }
+h5 { font-size: 1.33rem; font-weight: bold; }
+h4 { font-size: 1.44rem; padding-top: .33rem;}
+h3 { font-size: 1.73rem; padding-top: .5rem;}
+h2 { font-size: 2.07rem; padding-top: .75rem;}
+h1 { font-size: 2.49rem; padding-top: 1rem;}
+h1.title { font-size: 2.99rem; }
+*/
+/*h2 + div.official {  margin-bottom: 0;  }
+h3 + div.official {  margin-bottom: 0;  } */
+
+main { margin-bottom: 3rem; }
+
+div.subheading { align:center; font-size: 1.73rem; padding: 0; }
+div.undersubheading { font-size: 1.44rem; padding: 0; }
+a.example-link { font-weight: bold; }
+div.example-linkback { text-align: right; }
+*/
+/** + p { margin-top: 1rem; }
+p + * { margin-bottom: 1rem; }*/
+/*p + p { margin: .5rem 0 .5rem 0; }*/
+
+/*blockquote + p { margin-top: 1rem; margin-bottom: 1rem; }
+p.defnprototype { background-color: #EAEAFA; padding: .75rem; border: thin solid #CACAEA; border-radius: .7rem; margin: 1.25rem 0 1rem 0;}
+
+div.example-crossref {
+    text-align: right;
+}
+
+div.imgcontainer { }
+*/
+/*div.example-heading { font-weight: bold; }*/
+
+/*p.example-description { margin-left: 1rem; margin-right: 1rem; }*/
+
+
+/*font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal;
+  font-weight: 400;
+  src: local('Atkinson Hyperlegible'),
+url("./fonts/Atkinson-Hyperlegible-Regular-102a.woff2") format("woff2"),
+url("./fonts/Atkinson-Hyperlegible-Regular-102.woff") format("woff")
+
+}
+font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal;
+  font-weight: 700;
+  src: local('Atkinson Hyperlegible'),
+url("./fonts/Atkinson-Hyperlegible-Bold-102a.woff2") format("woff2"),
+url("./fonts/Atkinson-Hyperlegible-Bold-102.woff") format("woff")
+}
+font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: italic;
+  font-weight: 400;
+  src: local('Atkinson Hyperlegible'),
+url("./fonts/Atkinson-Hyperlegible-Italic-102a.woff2") format("woff2"),
+url("./fonts/Atkinson-Hyperlegible-Italic-102.woff") format("woff")
+}
+font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: italic;
+  font-weight: 700;
+  src: local('Atkinson Hyperlegible'),
+url("./fonts/Atkinson-Hyperlegible-BoldItalic-102a.woff2") format("woff2"),
+url("./fonts/Atkinson-Hyperlegible-BoldItalic-102.woff") format("woff")
+}
+*/
+
+
+/*span.crossreference { color: red; }
+
+a.crossreference_link, a.example-link {
+    text-decoration: none;
+    color: #080808;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+div.crossreference, div.example-link-contents strong {
+    text-decoration: underline;
+}
+a.crossreference_link:visited div.crossreference strong {
+    color: purple;
+}
+a.example-link:visited div.example-link-contents strong {
+    color: purple;
+}
+*/
+/*
+div.example-number { font-size: 1.73rem; }
+div.example-rest { }
+*/
+/* biggest problem is sheer width of some of the codetables overflowing their boxes. try Input Sans Serif and Go Sans Serif fonts. */
+
+
+/* .code,.codetable { font-family: "JetBrains Mono", monospace; color: #000; background-color: #E6E6E6; font-size: .9rem; line-height: 1.25; margin: 0 .5rem 0 .5rem; } */
+
+
+
+
+
+/*td { padding-left: .75rem; padding-right: .75rem; }*/
+
+/* blockquote.code p.quoted { color: blue; } */
+
+
+/*.defnprototype strong { color: green; }*/
+/*border-radius:.4rem; border: thin solid #DADADA;margin: .5rem;  padding: .5rem;}*/
+/*blockquote { font-size: 1rem; line-height: 1.25; }*/
+/*blockquote.code { background-color: #E6E6E6; border-radius:.4rem; border: thin solid #DADADA;  padding: .5rem; margin-bottom: 0; margin-top: 0; }*/
+/*blockquote.code { background-color: #E6E6E6; padding: .5rem; width: 100%; margin: 0 1rem 0 1rem; }*/
+
+/* TODO codetable, blockquote width discrepancy, probably because of p.quoted within td.quotedtablecell within tr within tbody within table.codetable */
+
+/* takig this off of .code,.codetable equalized the widths: width: 100%; padding: .5rem; margin: 0 1rem 0 1rem; }*/
+/* so maybe try putting padding and margin on p.quoted  */
+
+/* then fix width = 60 rem and all the problems coming from finally doing margin 0, padding 0 */
+
+
+
+/* background-color: #E0E0E0; color: #000; margin-top: 1rem; margin-bottom: 1rem; padding-left: 1rem; padding-right: 1rem; padding-top: .01rem; padding-bottom: .01rem;} */
+
+/*div.indextable {  }*/
+
+
+
+/* ------------------------------------------------------------------------ */
+/* The General Index  original:
+
+table.indextable {
+	border-collapse: collapse;
+	width: 100%;
+	margin-top: 8px;
+}
+
+p.indexentry {
+	font-size: 0.8em;
+	margin-top: 0px;
+	margin-bottom: 4px;
+	text-indent: -2em;
+	padding-left: 2em;
+}
+
+a.indexlink {
+	color: #666;
+	text-decoration: none;
+	border-bottom: 1px dotted #666;
+}
+
+a.indexseelink {
+	text-decoration: none;
+	border-bottom: 1px dotted #666;
+}
+
+a.indexlinkalt {
+	color: #666;
+	text-decoration: none;
+	border-bottom: 1px dotted #666;
+	font-style: italic;
+}
+
+span.indexgloss {
+	font-size: 0.7em;
+	font-style: italic;
+	color: #088;
+}
+
+span.indexsee {
+	font-style: italic;
+	color: #666;
+}
+
+span.smoketest {
+	background-color: #000000;
+	color: #ffffff;
+	padding-left: 6px;
+	padding-right: 6px;
+	margin-left: 3px;
+	margin-right: 3px;
+}
+
+
+span.indexstandard {
+}
+span.indexsource {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexsourcearg {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexsourceargbracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexsourcepartbracketed {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexphrase {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexphrasebracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexifphrase {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexifphrasebracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexsayphrase {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexsayphrasebracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexoutphrase {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexoutphrasebracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexassert {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexassertbracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexrb {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexrbbracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexprop {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexpropbracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexpropcat {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexpropcatbracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexadj {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexadjbracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexrelbracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexrelcatbracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexrelverb {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexglob {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexglobbracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexactvar {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexactvarbracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexconst {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexconstbracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexaction {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexactionbracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexactivity {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexactivitycat {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexdescactivity {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexexample {
+font-style: italic;
+}
+span.indextitle {
+font-style: italic;
+}
+span.indexofsourcebracketed {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indexuseopt {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indextoken {
+color: #000080;
+font-family: "Lucida Console", Monaco, "Courier New", Courier, monospace;
+font-size: 0.9em;
+}
+span.indextokenbracketed {
+color: #8080ff;
+font-family: "Lucida Grande", Geneva, Arial, Tahoma, Verdana, Helvetica, Helv;
+font-style: italic;
+}
+span.indexcommand {
+color: #186000;
+font-family: Georgia, "Times New Roman", Times, serif;
+font-size: 0.9em;
+}
+span.indextestcmd {
+color: #186000;
+font-family: Georgia, "Times New Roman", Times, serif;
+font-size: 0.9em;
+}
+span.indexcommandpartbracketed {
+color: #186000;
+font-family: Georgia, "Times New Roman", Times, serif;
+font-size: 0.9em;
+}
+
+
+*/
+
+/*div.bookexamples { margin: .5rem; }*/
+
+/*div.example-link {
+    display: grid;
+    grid-template-columns: 1fr 11fr;
+    grid-gap: 20px;
+    align-items: center;
+    margin-top: .5rem;
+    margin-bottom: .5rem;
+}*/
+/*a.crossreference {
+    text-decoration: none;
+    color: #080808; 
+}
+a.crossreference:visited {
+    text-decoration: none;
+}
+a.crossreference strong {
+    text-decoration: underline;
+}
+a.crossreference:visited strong {
+    color: purple;
+}*/
+/*
+font-face {
+  font-family: 'Go';
+  src: url('./fonts/Go-Regular.ttf')  format('truetype');
+  font-weight: normal;
+  font-style: regular;
+}
+font-face {
+  font-family: 'Go';
+  src: url('./fonts/Go-Bold.ttf')  format('truetype');
+  font-weight: bold;
+  font-style: regular;
+}
+*/
+/*body { 
+color: #080808; 
+background-color: #FAFAFA;
+font-family: "Alegreya", serif;
+width: 39rem;
+margin: auto;
+font-size: 100%;
+} */
+
+
+STYLE
+  end
+end
