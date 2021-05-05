@@ -1,6 +1,7 @@
 <!doctype html>
 <meta charset="utf-8"><html lang="en"><head><title>Inform 7</title><link rel="stylesheet" href="style.css"><script src="one.js"></script></head><body><main>
 <header>
+<div><a id="toggle" href="javascript:toggle_details()">Open all examples</a></div>
 <%== Inf7::Template['_table'].render(volumes: volumes, link_format: :one) %>
 </header>
 <% volumes.each do |volume| %>
