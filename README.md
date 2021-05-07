@@ -141,9 +141,9 @@ file:///home/user/.local/share/inf7/doc/index.html
 
 All of its internal links are relative, so the whole doc dir could be copied somewhere a web server was configured to access and it would just work.
 
-That index.html provides just a Table of Contents and the General Index and there's a web page for each chapter of Writing with Inform and The Recipe Book. But there's also a monolithic one.html file comprising the whole thing, thus facilitating searching the documentation via "find in page" in your browser.
+That index.html provides just a Table of Contents and the General Index and there's a web page for each chapter of Writing with Inform and The Recipe Book. The examples appear only in The Recipe Book; references to them in Writing in Inform link to them. The examples appear in collapsible boxes that are closed by default.
 
-The examples appear only in The Recipe Book; references to them in Writing in Inform link to them. 
+There's also a monolithic one.html file comprising the whole thing, thus facilitating searching the documentation via "find in page" in your browser. Since your browser's search won't find the content of closed boxes, use the 'Open all examples' link at the top first if you want your search to include them.
 
 If you have [pandoc](https://pandoc.org/) installed, you can create a single epub of the documentation with:
 
@@ -250,9 +250,19 @@ To customize the .gitignore new projects get, copy tmpl/gitignore.erb to your co
 
 ## Extensions
 
-TODO
+### Creating a new extension
 
-### Install
+The ext subcommand allows making a new extension.
+
+```
+$ inf7 ext --name "Flexible Fluids" "Astounding Journey"
+```
+
+You may specify an author command-line flag to override the project or config setting. The initial contents are from the extension template; see Templates for info on how to modify that.
+
+As with installation, you'll have to include it manually to make use of it.
+
+### Installing an existing extension
 
 To install a particular extension in a particular project, or in your config dir for automatic inclusion in the extensions directories of subsequent projects, use the install command. The path specified for the extension must include the extension's author-named parent directory.
 
@@ -274,18 +284,6 @@ $ inf7 install --init --ext ~/inform/Dannii\ Willis/Xorshift.i7x
 
 In either case, copying directly to the relevant directory works as well.
 
-### Creating a new extension
-
-The ext subcommand allows making a new extension.
-
-```
-$ inf7 ext --name "Flexible Fluids" "Astounding Journey"
-```
-
-You may specify an author command-line flag to override the project or config setting. The initial contents are from the extension template; see Templates for info on how to modify that.
-
-As with installation, you'll have to include it manually to make use of it.
-
 ## Regenerating the docs
 
 If you wish to regenerate the docs for an existing setup, use the doc subcommand.
@@ -300,6 +298,52 @@ With the ``--active`` flag, doc rewrites just the active content: css and js. Th
 
 ```
 $ inf7 doc --active
+```
+
+## Fakery
+
+Here's an alternative sample session:
+
+```
+$ cd a_walk_in_the_park
+$ ls
+a_walk_in_the_park.ni  extensions
+$ inf7
+/usr/local/bin/ni --noprogress --internal /usr/local/share/inform7/Internal --external /home/zed/external --project /home/zed/inform/A Walk in the Park.inform
+Compiled 18-word source.
+
+/usr/local/bin/inform6 -wE2~SDG /home/zed/inform/A Walk in the Park.inform/Build/auto.inf /home/zed/inform/A Walk in the Park.inform/Build/output.ulx
+Inform 6.34 for Linux (21st May 2020)
+In:  1 source code files             66292 syntactic lines
+Out:   Glulx story file 1.210506 (537.5K long):
+
+/usr/local/bin/cBlorb -unix /home/zed/inform/A Walk in the Park.inform/Release.blurb /home/zed/inform/A Walk in the Park.inform/Build/output.gblorb
+cBlorb 1.2 [executing on Thursday 6 May 2021 at 11:06.18]
+Completed: wrote blorb file of size 642210 bytes (1 picture(s), 0 sound(s))
+$ ls
+a_walk_in_the_park.gblorb  a_walk_in_the_park.inf  a_walk_in_the_park.ni  a_walk_in_the_park.ulx  debug_log.txt  extensions  index.html  problems.html  release
+```
+
+Here's the trick:
+
+```
+% ls -l
+total 36
+lrwxrwxrwx 1 zed zed 83 May  5 21:05 a_walk_in_the_park.gblorb -> '/home/zed/inform/A Walk in the Park.inform/Build/output.gblorb'
+lrwxrwxrwx 1 zed zed 78 May  5 21:05 a_walk_in_the_park.inf -> '/home/zed/inform/A Walk in the Park.inform/Build/auto.inf'
+lrwxrwxrwx 1 zed zed 79 May  5 21:05 a_walk_in_the_park.ni -> '/home/zed/inform/A Walk in the Park.inform/Source/story.ni'
+lrwxrwxrwx 1 zed zed 80 May  5 21:05 a_walk_in_the_park.ulx -> '/home/zed/inform/A Walk in the Park.inform/Build/output.ulx'
+lrwxrwxrwx 1 zed zed 83 May  5 21:05 debug_log.txt -> '/home/zed/inform/A Walk in the Park.inform/Build/Debug log.txt'
+lrwxrwxrwx 1 zed zed 77 May  5 21:05 extensions -> '/home/zed/inform/A Walk in the Park.materials/Extensions'
+lrwxrwxrwx 1 zed zed 89 May  5 21:05 index.html -> '/home/zed/inform/A Walk in the Park.inform/.index/Index/Welcome.html'
+lrwxrwxrwx 1 zed zed 83 May  5 21:05 problems.html -> '/home/zed/inform/A Walk in the Park.inform/Build/problems.html'
+lrwxrwxrwx 1 zed zed 74 May  5 21:05 release -> '/home/zed/inform/A Walk in the Park.materials/Release'
+```
+
+If you feel like having this level of denial, it can be yours with:
+
+```
+$ inf7 fake --name a_walk_in_the_park "A Walk in the Park"
 ```
 
 ## Contributing

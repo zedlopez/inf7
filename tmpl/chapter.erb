@@ -5,6 +5,7 @@
 <div class="toc">
 <h1><%= chapter.volume.title %></h1>
 <%== Inf7::Template[:doc_navbar].render(chapter: chapter) %>
+<div><a id="toggle" href="javascript:toggle_details()">Open all examples</a></div>
 <h2><%= chapter.header %></h2>
 <% chapter.sections.sort_by {|k,v| k }.each do |k,section| -%>
 <div class="toc-section"><%= section.chapter.num %>.<%= section.num %> <a href="<%== section.url(:chapter) %>"><%= section.title %></a></div>

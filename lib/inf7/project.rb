@@ -69,7 +69,6 @@ module Inf7
       if fake
         conf[:fakedir] = Pathname.new(fake).expand_path
         conf[:fake] = File.basename(fake)
-        puts "in [] #{conf[:fake]}"
       end
       Inf7::Doc.load
       self.new(dir.to_s, conf, false)
@@ -203,7 +202,7 @@ module Inf7
     end
 
     def rc_conf
-      @conf.reject {|k,v| (%i{ top git }.to_set + Inf7::Project::SettingsFields).member?(k) }
+      @conf.reject {|k,v| (%i{ top git fake fakedir }.to_set + Inf7::Project::SettingsFields).member?(k) }
     end
 
     def opt(key)
