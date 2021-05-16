@@ -152,8 +152,12 @@ class Inf
       opt :cblorb, "Location of cBlorb", type: :string, short: :none
       opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
     end
+    opts = {}
+    Inf7::Project::Fields.each do |field|
+      opts[field] = @subopts[field] if @subopts.key?("#{field}_given".to_sym)
+    end
     project = Inf7::Project[ARGV]
-    project.set(@subopts.reject {|k,v| v.nil? or !Inf7::Project::Fields.member?(k) })
+    project.set(opts)
   end
   def opt_ext
     @subopts = Optimist::options do

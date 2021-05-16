@@ -2,27 +2,33 @@ PATH
   remote: .
   specs:
     inf7 (0.1.0)
-      erubi
-      optimist
-      tty-which
-      xdg
+      erubi (~> 1.10)
+      nokogiri (~> 1.11)
+      optimist (~> 3.0)
+      tty-which (~> 0.4)
+      xdg (~> 4.5)
 
 GEM
   remote: https://rubygems.org/
   specs:
     erubi (1.10.0)
+    mini_portile2 (2.5.1)
+    nokogiri (1.11.3)
+      mini_portile2 (~> 2.5.0)
+      racc (~> 1.4)
     optimist (3.0.1)
+    racc (1.5.2)
     rake (10.5.0)
     tty-which (0.4.2)
-    xdg (3.1.1)
+    xdg (4.5.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  bundler (~> 1.17)
+  bundler (~> 2.1)
   inf7!
   rake (~> 10.0)
 
 BUNDLED WITH
-   1.17.2
+   2.1.4

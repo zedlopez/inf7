@@ -325,8 +325,7 @@ module Inf7
         transform_html(path, File.join(@index_root,$1))
       end
       index_html = @dir.join('index.html')
-      FileUtils.rm(index_html) if File.exist?(index_html)
-      FileUtils.ln_s(File.join(@index_root,'Index','Welcome.html'), index_html)
+      FileUtils.ln_s(File.join(@index_root,'Index','Welcome.html'), index_html) unless File.exist?(index_html)
     end
 
     def compile(options={})

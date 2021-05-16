@@ -1,22 +1,33 @@
-## Installation
+# inf7 Installation
 
-Add this line to your application's Gemfile:
+inf7 requires ruby (it was developed on ruby 2.7.3) and the bundler gem.
 
-```ruby
-gem 'inf7'
+```
+$ sudo apt install ruby
 ```
 
-And then execute:
+should be adequate on Debian or Debian-derived distros to install the system dependencies.
 
-    $ bundle
+This is probably the easiest way to install without requiring elevated permissions. Assuming you have $HOME/bin in your PATH:
 
-Or install it yourself as:
+```
+$ GEM_HOME="$HOME/gems" gem install inf7-0.1.0.gem
+$ cp inf7.sh "$HOME/bin/inf7"
+```
 
-    $ gem install inf7
+If you use a different value for GEM_HOME, you'll have to modify $HOME/bin/inf7 accordingly.
 
-## Development
+I don't recommend using ``sudo gem install`` and affecting your system-wide gem ecosystem.
 
-After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+From source:
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
-
+```
+$ git clone https://github.com/zedlopez/inf7.git
+$ cd inf7
+$ export GEM_HOME="$HOME/gems"
+$ gem install bundler
+$ bundle install
+$ gem build inf7.gemspec
+$ gem install inf7-0.1.0.gem
+$ cp inf7.sh "$HOME/bin/inf7"
+```

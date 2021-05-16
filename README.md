@@ -39,7 +39,7 @@ After a successful compilation, you could run A Walk in the Park.inform/Build/ou
 $ firefox "A Walk in the Park.inform/index.html"
 ```
 
-All links to your story's source, installed extensions, or documentation will work. If you select the one of the text icons that paste code directly into the source window in the IDE, the corresponding text will be copied to the clipboard instead; you could then paste it into your editor.
+All internal links to your story's source, installed extensions, or documentation will work. If you select the one of the text icons that paste code directly into the source window in the IDE, the corresponding text will be copied to the clipboard instead; you could then paste it into your editor.
 
 After compilation, a problems.html file (with appropriately rewritten links) is created alongside the original Problems.html in the Build directory; check it for easy access to the bits of documentation the compiler thought were relevant to the errors.
 
@@ -47,7 +47,7 @@ After compilation, a problems.html file (with appropriately rewritten links) is 
 $ firefox "A Walk in the Park.inform/Build/problems.html"
 ```
 
-## help
+## Usage
 
 You can ask inf7 for help to get a list of subcommands:
 
@@ -72,7 +72,7 @@ Commands:
   epub       Create epub
 ```
 
-And ask for help on any of the commands. ``--help`` must come _after_ the subcommand.
+You can also ask for help on any of the subcommands. ``--help`` must come _after_ the subcommand.
 
 ```
 $ inf7 settings --help
@@ -83,6 +83,12 @@ Options for settings
   --all         Project, user, and default settings
   -h, --help    Show this message
 ```
+
+If you specify a project, it is always the last thing on the line. Projects are the only thing that are specified _without_ some particular command-line flag.
+
+## Installation
+
+See [INSTALL.md](./INSTALL.md)
 
 ## Getting started
 
@@ -120,7 +126,9 @@ You may specify the locations of ni, inform6, and cBlorb here, but if they're in
 
 There are many other options; we'll get to them later.
 
-TODO example command
+```
+$ inf7 --internal /usr/local/share/inform7/Internal --external ~/external --resources /usr/share/gnome-inform7/Resources --docs /usr/share/gnome-inform7/Documentation --author "Zed Lopez"
+```
 
 ## Files
 
@@ -139,7 +147,7 @@ The rewritten documentation lives in a doc dir under the data dir. You can acces
 
 file:///home/user/.local/share/inf7/doc/index.html
 
-All of its internal links are relative, so the whole doc dir could be copied somewhere a web server was configured to access and it would just work.
+All of its internal links are relative, so the whole doc dir could be put somewhere a web server could serve from and it would just work.
 
 That index.html provides just a Table of Contents and the General Index and there's a web page for each chapter of Writing with Inform and The Recipe Book. The examples appear only in The Recipe Book; references to them in Writing in Inform link to them. The examples appear in collapsible boxes that are closed by default.
 
@@ -151,7 +159,7 @@ If you have [pandoc](https://pandoc.org/) installed, you can create a single epu
 $ inf7 epub
 ```
 
-It will be written to inform7.epub in the doc subdirectory of the data dir. By including the examples only once and pruning the HTML it is just over a third of the size of the epub that accompanied the official documentation.
+It will be written to inform7.epub in the doc subdirectory of the data dir. By including the examples only once and pruning the HTML it is almost two thirds smaller than the epub that accompanied the official documentation.
 
 ## Creating a project
 
@@ -179,7 +187,7 @@ If you want the system to create the .inform and .materials directories under a 
 inf7 init --top "The Parent Trap"
 ```
 
-This creates a "The Parent Trap" directory containing "The Parent Trap.inform" and "The Parent Trap.materials" (with the usual initial contents). One of the reasons you might want to do this is for ease of use with git; if that's what you're after, use the --git command-line flag. --git assumes --top and runs git init for you. (It doesn't add anything to the repo, though.)
+This creates a "The Parent Trap" directory containing "The Parent Trap.inform" and "The Parent Trap.materials" (with the usual initial contents). One of the reasons you might want to do this is for ease of use with git; if that's what you're after, use the --git command-line flag. --git implies --top and it runs git init for you. (It doesn't add anything to the repo, though.)
 
 ```
 inf7 init --git "Ice Cream Shoppe"
@@ -193,7 +201,7 @@ The inf7 config directory has an extensions subdirectory. If you put extensions 
 
 ## Compiling a project
 
-Most of the time compile won't need command-line flags until you want the ``--release`` flag. But you have the option of overriding any relevant project or config setting on the command-line if you want.
+Most of the time compile won't need command-line flags until you want the ``--release`` flag, but you have the option of overriding any relevant project or config setting on the command-line if you want.
 
 If you're in or under an Inform 7 project directory, inf7 defaults to operating on that project if you don't explicitly specify one. And if you don't specify a subcommand, it defaults to 'compile'. 
 
@@ -238,7 +246,66 @@ The compile subcommand will need to have access to ni, inform6, and cBlorb. If t
 
 ## Set and Settings
 
-TODO
+Because inf7 creates and uses a Settings.plist file for compatibility with the IDE, project settings are split between Settings.plist and .rc.yml. To see all of a project's settings, use the settings command:
+
+```
+$ % ruby -Ilib bin/inf7 settings A\ Walk\ in\ the\ Park
+
+A Walk in the Park project settings
+  create_blorb: true
+  format: glulx
+  nobble_rng: false
+```
+
+Those three will always appear because they have explicit values in Settings.plist.
+
+To find all applicable settings, including those from the config and the defaults in use if nothing is specified, add ``--all``.
+
+```
+$ ruby -Ilib bin/inf7 settings --all A\ Walk\ in\ the\ Park
+
+A Walk in the Park project settings
+  create_blorb: true
+  format: glulx
+  nobble_rng: false
+
+User-wide settings
+  author: Zed Lopez
+  internal: /usr/local/share/inform7/Internal
+  external: /home/zed/external
+  resources: /usr/share/gnome-inform7/Resources
+  docs: /usr/share/gnome-inform7/Documentation
+  top: false
+  git: false
+  quiet: false
+
+Defaults
+  i6flagstest: -wE2~SD
+  i6flagsrelease: -wE2~S
+  i7flagstest:
+  i7flagsrelease:
+  cblorbflags: -unix
+  blorbfile_basename: output
+  index: true
+  force: false
+  progress: false
+```
+
+To set project-level things, you could edit .rc.yml and Settings.plist directly, but there's also a ``set`` subcommand.
+
+```
+$ inf7 set --format zcode A\ Walk\ in\ the\ Park
+$ inf7 set --author "Sudo Nymme" A\ Walk\ in\ the\ Park
+$ inf7 settings A\ Walk\ in\ the\ Park
+
+A Walk in the Park project settings
+  create_blorb: true
+  format: zcode
+  nobble_rng: false
+  author: Sudo Nymme
+```
+
+There isn't an equivalent ability to modify the config; just edit inf7.yml manually.
 
 ## Templates
 
@@ -266,7 +333,7 @@ As with installation, you'll have to include it manually to make use of it.
 
 To install a particular extension in a particular project, or in your config dir for automatic inclusion in the extensions directories of subsequent projects, use the install command. The path specified for the extension must include the extension's author-named parent directory.
 
-Installing in a particular project:
+Installing for a particular project:
 
 ```
 $ inf7 install --ext ~/inform/Emily\ Short/Deluxe\ Doors.i7x "A Walk in the Park"
@@ -346,14 +413,18 @@ If you feel like having this level of denial, it can be yours with:
 $ inf7 fake --name a_walk_in_the_park "A Walk in the Park"
 ```
 
-## Contributing
+## Cautions
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/inf7. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+This is an alpha-release. I haven't yet used it to develop a real Inform project. While I don't know of any bugs, I'm sure they exist. The code attempts to be scrupulous about never clobbering any files except the ones it created and, of course, the ones normally clobbered by compilation and nowhere does it outright removes files, but I couldn't say it's impossible it could somehow damage your system.
+
+The docs-munger and compiler-helper began as independent projects and with both of them I was figuring out what I wanted them to be as I went. The code sorely needs refactoring, which I've already begun, but it's usable as is so I wanted to share and solicit feedback.
+
+Because it's an alpha release of a tool expected to be used by single developers on their personal projects, the current code isn't especially defensive and you will certainly be able to get bad behavior if you go out of your way to pass bad parameters.
+
+## Bugs
+
+Bug reports are welcome on the [inf7 GitHub repo](https://github.com/zedlopez/inf7).
 
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
-
-## Code of Conduct
-
-Everyone interacting in the Inf7 project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/inf7/blob/master/CODE_OF_CONDUCT.md).
