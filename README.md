@@ -103,22 +103,22 @@ resources -- parent dir of doc_images, map_icons, scene_icons, bg_images, outcom
 docs -- contains Rdoc1.html through Rdoc103.html, doc1.html through doc459.html, and general_index.html
 external -- Inform 7's external directory (parent dir of the Extensions directory accessible to all your projects)
 
-external and internal will be familiar to any command-line users of ni: they're the same flags you pass to it. Places you'd expect resources:
+external and internal will be familiar to any command-line users of ni: they're the same values you pass to it. Places you'd expect resources:
 
 - linux CLI package: /usr/local/share/inform7/Documentation (not named Resources)
 - gnome package: /usr/share/gnome-inform7/Resources
 - Mac OS: Inform/Inform.app/Contents/Resources 
-- Windows: TODO
+- Windows: "Program Files\Inform 7\Documentation"
 
 Places you'd expect docs:
 
 - gnome package: /usr/share/gnome-inform7/Documentation
 - Mac OS: Inform/Inform.app/Contents/Resources/English.lproj
-- Windows: TODO
+- Windows: "Program Files\Inform 7\Documentation"
 
-If you only have the Linux CLI package, you don't have the docs directory. You can find it in this [LZMA compressed archive of the Inform 7 data](https://github.com/ptomato/gnome-inform7/raw/master/data/Inform_6M62_data.tar.lz). You may have to rename it to end .lzma instead of .lz for tar to be able to extract its contents. This archive has top-level Documentation and Resources directories appropriate for --docs and --resources. (The Linux CLI package has the equivalent documentation contents but with more readable filenames; the Project Index uses the less readable filenames internally.)
+If you only have the Linux CLI package, you don't have the docs directory. You can find it in this [LZMA compressed archive of the Inform 7 data](https://github.com/ptomato/gnome-inform7/raw/master/data/Inform_6M62_data.tar.lz). You may have to rename it to end .xz instead of .lz for tar to be able to extract its contents. This archive has top-level Documentation and Resources directories appropriate for --docs and --resources. (The Linux CLI package has the equivalent documentation contents but with more readable filenames; the Project Index uses the less readable filenames internally.)
 
-Not strictly required, but you'll probably want to specify the author tag.
+Not strictly required, but you'll probably want to specify the author tag or you'll get the default of "Imp".
 
 author -- default author for new stories and extensions. 
 
