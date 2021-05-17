@@ -127,7 +127,7 @@ You may specify the locations of ni, inform6, and cBlorb here, but if they're in
 There are many other options; we'll get to them later.
 
 ```
-$ inf7 --internal /usr/local/share/inform7/Internal --external ~/external --resources /usr/share/gnome-inform7/Resources --docs /usr/share/gnome-inform7/Documentation --author "Zed Lopez"
+$ inf7 setup --internal /usr/local/share/inform7/Internal --external ~/external --resources /usr/share/gnome-inform7/Resources --docs /usr/share/gnome-inform7/Documentation --author "Zed Lopez"
 ```
 
 ## Files
