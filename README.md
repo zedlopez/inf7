@@ -415,7 +415,7 @@ $ inf7 fake --name a_walk_in_the_park "A Walk in the Park"
 
 ## Cautions
 
-This is an alpha-release. I haven't yet used it to develop a real Inform project. While I don't know of any bugs, I'm sure they exist. The code attempts to be scrupulous about never clobbering any files except the ones it created and, of course, the ones normally clobbered by compilation and nowhere does it outright removes files, but I couldn't say it's impossible it could somehow damage your system.
+This is an alpha-release. I haven't yet used it to develop a real Inform project. While I don't know of any bugs, I'm sure they exist. The code attempts to be scrupulous about never clobbering any files except the ones it created and, of course, the ones normally clobbered by compilation and nowhere does it outright remove files, but I couldn't say it's impossible it could somehow damage your system.
 
 The docs-munger and compiler-helper began as independent projects and with both of them I was figuring out what I wanted them to be as I went. The code sorely needs refactoring, which I've already begun, but it's usable as is so I wanted to share and solicit feedback.
 
