@@ -159,7 +159,7 @@ If you have [pandoc](https://pandoc.org/) installed, you can create a single epu
 $ inf7 epub
 ```
 
-It will be written to inform7.epub in the doc subdirectory of the data dir. By including the examples only once and pruning the HTML it is almost two thirds smaller than the epub that accompanied the official documentation.
+It will be written to inform7.epub in the doc subdirectory of the data dir. By including the examples only once and pruning the HTML it is a quarter of the size of the epub that accompanied the official documentation.
 
 ## Creating a project
 

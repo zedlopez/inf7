@@ -37,9 +37,10 @@ module Inf7
         %w{ metadata.yml epub.css}.each do |filename|
           Inf7::Template.write(filename, File.join(Inf7::Conf.doc, filename))
         end
-        stdout, stderr, rc = Open3.capture3('pandoc', '-o', File.join(Inf7::Conf.doc,'inform7.epub'), File.join(Inf7::Conf.doc, 'metadata.yml'), File.join(Inf7::Conf.doc, 'epub.html'), '-t', 'epub3', "--epub-cover-image=#{File.join(Inf7::Conf.doc, %Q{Welcome Background.png})}", '--toc', "--css=#{File.join(Inf7::Conf.doc,'epub.css')}", '--toc-depth=3')
+        outfile = File.join(Inf7::Conf.doc,'inform7.epub')
+        stdout, stderr, rc = Open3.capture3('pandoc', '-o', outfile, File.join(Inf7::Conf.doc, 'metadata.yml'), File.join(Inf7::Conf.doc, 'epub.html'), '-t', 'epub3', "--epub-cover-image=#{File.join(Inf7::Conf.doc, %Q{Welcome Background.png})}", '--toc', "--css=#{File.join(Inf7::Conf.doc,'epub.css')}", '--toc-depth=3')
         if rc.exitstatus.zero?
-          puts stdout # TODO respect quiet
+          puts "Wrote #{outfile}" # TODO respect quiet
         else
           STDERR.puts stderr
           exit rc.exitstatus
