@@ -25,13 +25,6 @@ module Inf7
     @links = {}
     class << self
       attr_accessor :links
-      # Ruby 2.7+ blares warnings to STDERR about URI.escape's deprecation hence rolling our own
-      def uri_escape(str)
-        str.split(//).map {|c| c.match(URI::UNSAFE) ? sprintf('%%%02x',c.ord).upcase : c }.join
-      end
-      def uri_unescape(str)
-        str.gsub(/%(\h\h)/, $1.to_s.to_i(16).chr)
-      end
       def epub(options)
         Optimist.die "Can't find pandoc" unless TTY::Which.which('pandoc')
         %w{ metadata.yml epub.css}.each do |filename|
@@ -48,7 +41,7 @@ module Inf7
       end
 
       def fix_javascript(js)
-        Inf7::Doc.uri_unescape(js).gsub(/\[=(0x\h{4})=\]/) do |n|
+        CGI.unescape(js).gsub(/\[=(0x\h{4})=\]/) do |n|
           case $1
           when "0x0022"
             '&quot;'
