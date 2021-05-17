@@ -21,7 +21,7 @@ $ inf7 compile A\ Walk\ in\ the\ Park
 /usr/local/bin/ni --noprogress --internal /usr/local/share/inform7/Internal --external /home/zed/external --project /home/zed/inform/A Walk in the Park.inform
 Compiled 23-word source.
 
-/usr/local/bin/inform6 -wE2~SDG /home/zed/inform/A Walk in the Park.inform/Build/auto.inf /home/zed/inform/A Walk in the Park.inform/Build/output.ulx
+/usr/local/bin/inform6 -wE2SDG /home/zed/inform/A Walk in the Park.inform/Build/auto.inf /home/zed/inform/A Walk in the Park.inform/Build/output.ulx
 Inform 6.34 for Linux (21st May 2020)
 In:  1 source code files             66296 syntactic lines
 Out:   Glulx story file 1.210503 (537.5K long):
@@ -379,7 +379,7 @@ $ inf7
 /usr/local/bin/ni --noprogress --internal /usr/local/share/inform7/Internal --external /home/zed/external --project /home/zed/inform/A Walk in the Park.inform
 Compiled 18-word source.
 
-/usr/local/bin/inform6 -wE2~SDG /home/zed/inform/A Walk in the Park.inform/Build/auto.inf /home/zed/inform/A Walk in the Park.inform/Build/output.ulx
+/usr/local/bin/inform6 -wE2SDG /home/zed/inform/A Walk in the Park.inform/Build/auto.inf /home/zed/inform/A Walk in the Park.inform/Build/output.ulx
 Inform 6.34 for Linux (21st May 2020)
 In:  1 source code files             66292 syntactic lines
 Out:   Glulx story file 1.210506 (537.5K long):
