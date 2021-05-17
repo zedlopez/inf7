@@ -98,10 +98,10 @@ Before you can do anything else, you have to run setup. This step's a little fid
 
 The following are required:
 
-internal -- Inform 7's Internal Directory (parent dir of "Extensions/Graham Nelson/Standard Rules.i7x" at al)
-resources -- parent dir of doc_images, map_icons, scene_icons, bg_images, outcome_images 
-docs -- contains Rdoc1.html through Rdoc103.html, doc1.html through doc459.html, and general_index.html
-external -- Inform 7's external directory (parent dir of the Extensions directory accessible to all your projects)
+- internal -- Inform 7's Internal Directory (parent dir of "Extensions/Graham Nelson/Standard Rules.i7x" at al)
+- resources -- parent dir of doc_images, map_icons, scene_icons, bg_images, outcome_images
+- docs -- contains Rdoc1.html through Rdoc103.html, doc1.html through doc459.html, and general_index.html
+- external -- Inform 7's external directory (parent dir of the Extensions directory accessible to all your projects)
 
 external and internal will be familiar to any command-line users of ni: they're the same values you pass to it. Places you'd expect resources:
 
