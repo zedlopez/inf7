@@ -1,0 +1,2 @@
+0.1.0 initial release
+0.1.1 changed default i6flagstest and i6flagsrelease

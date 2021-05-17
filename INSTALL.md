@@ -11,7 +11,7 @@ $ git clone https://github.com/zedlopez/inf7.git
 $ cd inf7
 $ export GEM_HOME="$HOME/gems"
 $ gem build inf7.gemspec
-$ gem install inf7-0.1.0.gem
+$ gem install inf7-0.1.1.gem
 $ cp inf7.sh "$HOME/bin/inf7"
 ```
 
