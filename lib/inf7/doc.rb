@@ -41,8 +41,7 @@ module Inf7
       end
 
       def fix_javascript(js)
-        puts js
-        x = CGI.unescape(js).gsub(/\[=(0x\h{4})=\]/) do |n|
+	CGI.unescape(js).gsub(/\[=(0x\h{4})=\]/) do |n|
           case $1
           when "0x0022"
             '&quot;'
@@ -56,9 +55,6 @@ module Inf7
             Integer($1).chr
           end
         end
-        puts x
-        exit
-        x
       end
     
       def to_html(node, link_format = :chapter, output_format = :html)
