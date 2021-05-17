@@ -24,13 +24,14 @@ module Inf7
       def create(conf)
         raise RuntimeError.new("#{@file} already exists") if File.exist?(@file)
         @conf = conf
+        %i{ internal external docs resources }.each do |dir_sym|
+          conf[dir_sym] = Pathname.new(conf[dir_sym]).expand_path.to_s
+        end
         File.open(@file, 'w') {|f| f.write(YAML.dump(conf))}
         %w{ story extension }.each do |template|
           dest = File.join(@tmpl, "#{template}.erb")
           FileUtils.cp(Inf7::Template.path(template), dest) unless File.exist?(dest)
         end
-#        story_template = File.join(@dir, 'story.ni.erb')
-#        File.open(story_template, 'w') {|f| f.write(Inf7::Project::StoryTemplate) } unless File.exist?(story_template)
         FileUtils.mkdir_p(File.join(@dir, 'extensions'))
         Inf7::Doc.create(conf)
       end
