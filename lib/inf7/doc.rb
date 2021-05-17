@@ -41,7 +41,8 @@ module Inf7
       end
 
       def fix_javascript(js)
-        CGI.unescape(js).gsub(/\[=(0x\h{4})=\]/) do |n|
+        puts js
+        x = CGI.unescape(js).gsub(/\[=(0x\h{4})=\]/) do |n|
           case $1
           when "0x0022"
             '&quot;'
@@ -55,6 +56,9 @@ module Inf7
             Integer($1).chr
           end
         end
+        puts x
+        exit
+        x
       end
     
       def to_html(node, link_format = :chapter, output_format = :html)
@@ -97,7 +101,7 @@ module Inf7
           write_template_files
           return
         end
-        Dir[File.join(Inf7::Conf.conf[:resources],'*.png')].each {|png| puts png; FileUtils.cp(png, Inf7::Conf.doc)}
+        Dir[File.join(Inf7::Conf.conf[:resources],'*.png')].each {|png| FileUtils.cp(png, Inf7::Conf.doc)}
         Dir[File.join(Inf7::Conf.conf[:resources],'*_images')].each {|dir| FileUtils.cp_r(dir, Inf7::Conf.doc) }
         Dir[File.join(Inf7::Conf.conf[:resources],'*_icons')].each {|dir| FileUtils.cp_r(dir, Inf7::Conf.doc) }
         Dir[File.join(Inf7::Conf.conf[:docs],'*.html')].each do |path|
