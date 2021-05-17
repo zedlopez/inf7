@@ -280,8 +280,8 @@ User-wide settings
   quiet: false
 
 Defaults
-  i6flagstest: -wE2~SD
-  i6flagsrelease: -wE2~S
+  i6flagstest: -wE2SD
+  i6flagsrelease: -wE2~S~D
   i7flagstest:
   i7flagsrelease:
   cblorbflags: -unix
