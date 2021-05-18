@@ -4,7 +4,7 @@
 
 inf7's aspirations:
 
-- take the pain out of working with Inform 7 on the command line
+- take the pain out of working with [Inform 7](https://inform7.com) on the command line
 - provide an easy to browse, read, and search version of the Inform 7 docs
 - give CLI users convenient access to the compiler-generated Project Index
 
@@ -88,7 +88,7 @@ If you specify a project, it is always the last thing on the line. Projects are 
 
 ## Installation
 
-See [INSTALL.md](./INSTALL.md)
+inf7 is written in Ruby, so your system will need at least that. See [INSTALL.md](./INSTALL.md) for installation details. 
 
 ## Getting started
 
@@ -122,7 +122,9 @@ Not strictly required, but you'll probably want to specify the author tag or you
 
 author -- default author for new stories and extensions. 
 
-You may specify the locations of ni, inform6, and cBlorb here, but if they're in your PATH you don't have to (see Executables below).
+You may specify the locations of ni, inform6, and cBlorb here, but if they're in your PATH you don't have to (see Executables below). 
+
+The default for cblorbflags is '-unix'. Mac users will want to set it to '-osx' and Windows users to '-windows'.
 
 There are many other options; we'll get to them later.
 
@@ -249,7 +251,7 @@ The compile subcommand will need to have access to ni, inform6, and cBlorb. If t
 Because inf7 creates and uses a Settings.plist file for compatibility with the IDE, project settings are split between Settings.plist and .rc.yml. To see all of a project's settings, use the settings command:
 
 ```
-$ % ruby -Ilib bin/inf7 settings A\ Walk\ in\ the\ Park
+$ inf7 settings A\ Walk\ in\ the\ Park
 
 A Walk in the Park project settings
   create_blorb: true
@@ -262,7 +264,7 @@ Those three will always appear because they have explicit values in Settings.pli
 To find all applicable settings, including those from the config and the defaults in use if nothing is specified, add ``--all``.
 
 ```
-$ ruby -Ilib bin/inf7 settings --all A\ Walk\ in\ the\ Park
+$ inf7 settings --all A\ Walk\ in\ the\ Park
 
 A Walk in the Park project settings
   create_blorb: true
@@ -421,9 +423,21 @@ The docs-munger and compiler-helper began as independent projects and with both 
 
 Because it's an alpha release of a tool expected to be used by single developers on their personal projects, the current code isn't especially defensive and you will certainly be able to get bad behavior if you go out of your way to pass bad parameters.
 
-## Bugs
+## Questions / Comments / Bug Reports
 
-Bug reports are welcome on the [inf7 GitHub repo](https://github.com/zedlopez/inf7).
+For questions or general discussion, visit the [inf7 thread on the intfiction forums](https://intfiction.org/t/inf7-a-cli-project-manager-for-inform-7/50931).
+
+You can submit [bug reports via Github](https://github.com/zedlopez/inf7/issues).
+
+## Future development
+
+I have a lot of plans. One of them is to refactor in a way that facilitates other projects' use of individual modules. The current implementation ended up too pervasively tied to its particular configuration scheme.
+
+And maybe I'll even come up with a name that isn't so boring.
+
+## Reference
+
+For background on Inform 7 compilation CLI options, see [How to use ni, inform6, and cblorb by CLI](https://intfiction.org/t/command-line-inform-7-how-to-use-ni-inform6-and-cblorb-by-cli/50108).
 
 ## License
 
