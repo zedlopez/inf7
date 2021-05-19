@@ -39,7 +39,7 @@ module Inf7
     
     SettingsFields = %i{ create_blorb nobble_rng format }.to_set
     
-    attr_reader :dir, :name, :settings_file, :story, :source, :extensions_dir, :build, :release, :inf, :uuid, :story_html, :quiet
+    attr_reader :dir, :name, :settings_file, :story, :source, :extensions_dir, :build, :release, :inf, :uuid, :quiet
     attr_accessor :conf #:format, :create_blorb, :nobble_rng
     def self.bare_compile(filename, **args)
       Optimist::die "Can't find #{filename}" unless File.exist?(filename)
@@ -313,34 +313,58 @@ module Inf7
       end
     end
 
-    def transform_html(infile, outfile)
+    def transform_html(infile, outfile, extension = nil)
       return if up_to_date(infile, outfile)
       FileUtils.mkdir_p(File.dirname(outfile))
       contents = File.read(infile)
       contents.gsub!(%r{"inform:/([^"]+)"}) {|match| %Q{"#{deform($1)}"} }
       contents.gsub!(%r{'inform:/([^']+)'}) {|match| %Q{'#{deform($1)}'} }
       contents.gsub!(%r{inform:/([^\s>]+)}) {|match| deform($1) }
-      contents.gsub!(/source:story\.ni/, "file://#{@story_html}")
+      contents.gsub!(/source:story\.ni/, "file://#{File.join(@index_root, 'story.html')}")
       contents.gsub!(/function pasteCode/,"#{Inf7::Template[:copycode].render} function pasteCode");
       contents.gsub!(/"javascript:pasteCode\('([^']+)'\)"/) do |m|
         %Q{"javascript:copyCode(`#{Inf7::Doc.fix_javascript($1)}`)"}
       end
+      contents.gsub!(%r{"source:.*?Extensions/([^#]+)(#line\d+)"}) do |m|
+        ext_name = File.basename($1, '.i7x')
+        author = File.dirname($1)
+        %Q{"file://#{File.join(@index_root, 'extensions', author, ext_name + '.html' + $2)}"}
+      end
+      # this requires real DOM manipulation: the openFile's are to the author dirs, not individual files. Need to get filename from preceding link. 
+#      contents.gsub!(%r{'javascript:project\(\)\.openFile\(".*\.materials/Extensions/([^"]+)"\)'}) do |m|
+#        author, ext_name = $1.split('/')
+#        %Q{"file://#{File.join(@index_root, 'extensions', author.downcase, ext_name.downcase + '.html')}"}
+#      end
+      
       node = Nokogiri::HTML(contents)
       navbar_div = Inf7::Doc::Doc.create_element('div')
       navbar_div.inner_html = Inf7::Template[:index_navbar].render(index_root: @index_root, build: @build.to_s)
+      
+      if extension
+        source_link = Inf7::Doc::Doc.create_element('a', "source code", href: "file://#{extension}")
+        node.at_css('body').first_element_child.before(source_link)
+        
+      end
       node.at_css('body').first_element_child.before(navbar_div)
       File.open(outfile, 'w') {|f| f.write(Inf7::Doc.to_html(node, :chapter, :html)) }
     end
 
-    def make_story_html
-      @story_html ||= File.join(@index_root, 'story.html')
-      unless up_to_date(@story, @story_html)
-        Inf7::Template.write(:story_html, @story_html, story: File.read(@story), name: @name, index_root: @index_root, build: @build)
+    def make_source_html
+      story_html = File.join(@index_root, 'story.html')
+      unless up_to_date(@story, story_html)
+        Inf7::Template.write(:inform7_source, story_html, story: File.read(@story), name: @name, index_root: @index_root, build: @build)
       end
-    end
-    
-    def reindex
-      make_story_html
+      Dir[File.join(@extensions_dir, '*', '*.i7x')].each do |extension|
+        ext = Pathname.new(extension).expand_path
+        author_dir, ext_name = ext.split[-2,2]
+        author_dir = author_dir.basename
+        dest_dir = File.join(@index_root, 'extensions', author_dir.to_s.downcase)
+        FileUtils.mkdir_p(dest_dir)
+        dest_file = File.join(dest_dir, "#{File.basename(ext_name.to_s, '.i7x').downcase}.html")
+        unless up_to_date(ext, dest_file)
+          Inf7::Template.write(:inform7_source, dest_file, story: File.read(extension), name: "#{ext_name}.html", index_root: @index_root, build: @build)
+        end
+      end
       Inf7::Doc.write_template_files
       prefix_regexp = %r{^#{File.join(opt(:external),'Documentation')}/}
       ext_doc_dir = File.join(@index_root, 'doc')
@@ -349,8 +373,13 @@ module Inf7
         next unless path.end_with?('.html')
         the_end = path.sub(prefix_regexp, '')
         outfile = File.join(ext_doc_dir, the_end)
-        transform_html(path, outfile)
+        # TODO: does this break on windows file separator?
+        extension_source = File.join(@index_root, the_end.downcase)
+        transform_html(path, outfile, extension_source)
       end
+    end
+    
+    def reindex
       Find.find(@dir.join('Index')) do |path|
         next unless path.match(/(Index\/.*\.html)\Z/)
         transform_html(path, File.join(@index_root,$1))
@@ -426,6 +455,7 @@ module Inf7
           filename = @build.join("#{basename}.html").to_s
           transform_html(filename, @build.join("#{basename.downcase}.html")) if File.exist?(filename)
         end
+        make_source_html
         if rc.exitstatus.zero?
           report opt(:verbose) ? stdout : "Compiled #{word_count}-word source. #{room_thing_count}"
           reindex if opt(:index)
