@@ -1,6 +1,6 @@
 # inf7 Installation
 
-inf7 requires ruby (it was developed on ruby 2.7.3).
+inf7 requires ruby (it was developed on ruby 2.7.3). If you want to be able to generate an epub of the documentation, you'll need [pandoc](https://pandoc.org/) as well.
 
 This is probably the easiest way to install without requiring elevated permissions. Assuming you have $HOME/bin in your PATH:
 

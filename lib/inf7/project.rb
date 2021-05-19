@@ -59,7 +59,7 @@ module Inf7
     def self.smoketest(options)
       Optimist::die "Can't find #{options[:ext]}" unless File.exist?(options[:ext])
       Dir.mktmpdir do |tmpdir|
-#        project = Inf7::Project.new(tmpdir, {}.merge(Inf7::Project::Defaults).merge(Inf7::Conf.conf).merge(options).merge( { top: true, allow_prior_existence: true }))
+        #        project = Inf7::Project.new(tmpdir, {}.merge(Inf7::Project::Defaults).merge(Inf7::Conf.conf).merge(options).merge( { top: true, allow_prior_existence: true }))
         project = Inf7::Project.new(tmpdir, {}.merge(options).merge( { top: true, allow_prior_existence: true }))
         ext_name, ext_author = Inf7::Project.install({ext: options[:ext], project: project}, [])
         Inf7::Template.write(:smoketest, project.story, ext: ext_name, author: ext_author)
@@ -304,8 +304,8 @@ module Inf7
       when /Extensions\/(Extensions|ExtIndex)\.html/
         "file://#{@index_root}/doc/#{$1}.html"
       when /^\/Extensions/
-        target = string.sub(/\A\/Extensions\/Extensions/,'/')
-        "file://#{@index_root}/doc#{target}"
+        target = string.sub(/\A\/Extensions\/Extensions/,'')
+        "file://#{@index_root}/doc#{target.downcase}"
       when /(R?doc\d+\.html)/
         "file://#{Inf7::Conf.doc}/#{Inf7::Doc.links.key?($1) ? [Inf7::Doc.links[$1][:file],Inf7::Doc.links[$1][:anchor]].join('#') : 'xyzzyplugh'}"
       else
@@ -328,13 +328,13 @@ module Inf7
       contents.gsub!(%r{"source:.*?Extensions/([^#]+)(#line\d+)"}) do |m|
         ext_name = File.basename($1, '.i7x')
         author = File.dirname($1)
-        %Q{"file://#{File.join(@index_root, 'extensions', author, ext_name + '.html' + $2)}"}
+        %Q{"file://#{File.join(@index_root, 'source', author, ext_name + '.html' + $2)}"}
       end
       # this requires real DOM manipulation: the openFile's are to the author dirs, not individual files. Need to get filename from preceding link. 
-#      contents.gsub!(%r{'javascript:project\(\)\.openFile\(".*\.materials/Extensions/([^"]+)"\)'}) do |m|
-#        author, ext_name = $1.split('/')
-#        %Q{"file://#{File.join(@index_root, 'extensions', author.downcase, ext_name.downcase + '.html')}"}
-#      end
+      #      contents.gsub!(%r{'javascript:project\(\)\.openFile\(".*\.materials/Extensions/([^"]+)"\)'}) do |m|
+      #        author, ext_name = $1.split('/')
+      #        %Q{"file://#{File.join(@index_root, 'extensions', author.downcase, ext_name.downcase + '.html')}"}
+      #      end
       
       node = Nokogiri::HTML(contents)
       navbar_div = Inf7::Doc::Doc.create_element('div')
@@ -359,34 +359,22 @@ module Inf7
       FileUtils.mkdir_p(ext_doc_dir)
 
       Dir[File.join(opt(:external),'Documentation', 'Extensions', '*', '*.html')].each do |extension|
-        ext = Pathname.new(extension).expand_path
-        puts ext
-        author_dir, ext_name = ext.split[-2,2]
-        author_dir = author_dir.basename
-        dest_dir = File.join(@index_root, 'extensions', author_dir.to_s)
-        FileUtils.mkdir_p(dest_dir)
-        dest_file = File.join(dest_dir, ext_name.to_s)
-        ext_base = File.basename(ext_name.to_s, '.html')
-        author_ext = File.join(author_dir, "#{ext_base}.i7x")
-        applicable = [ @extensions_dir, opt(:external), File.join(opt(:internal), 'Extensions') ].map {|x| File.join(x, author_ext) }.find {|y| File.exist?(y) }
+        author_dir, ext_base = author_extbase(extension)
+        applicable = find_applicable(author_dir, ext_base, @extensions_dir, opt(:external), File.join(opt(:internal), 'Extensions'))
+        puts applicable ? "found #{applicable}" : "nothing found"
         next unless applicable
-        puts "#{applicable} => #{dest_file}"
-#        unless up_to_date(applicable, dest_file)
-          Inf7::Template.write(:inform7_source, dest_file, source: File.read(applicable), name: ext_name.to_s, index_root: @index_root, build: @build)
-#        end
-        
-        transform_html(extension, File.join(ext_doc_dir, author_dir.to_s, ext_name.to_s), dest_file)
+        dest_dir = File.join(@index_root, 'source', author_dir)
+        FileUtils.mkdir_p(dest_dir)
+        dest_file = File.join(dest_dir, "#{ext_base}.html")
+        unless up_to_date(applicable, dest_file)
+          Inf7::Template.write(:inform7_source, dest_file, source: File.read(applicable), name: ext_base, index_root: @index_root, build: @build)
+        end
+        doc_dest_file = File.join(ext_doc_dir, author_dir.downcase, "#{ext_base.downcase}.html")
+        unless up_to_date(extension, doc_dest_file)
+          transform_html(extension, doc_dest_file, dest_file)
+        end
       end
       transform_html(File.join(opt(:external), 'Documentation', 'Extensions.html'), File.join(ext_doc_dir, 'Extensions.html'))
-#      prefix_regexp = %r{^#{File.join(opt(:external),'Documentation')}/}
-#      Find.find(File.join(opt(:external),'Documentation')) do |path|
-#        next unless path.end_with?('.html')
-#        the_end = path.sub(prefix_regexp, '')
-#        outfile = File.join(ext_doc_dir, the_end)
-#        # TODO: does this break on windows file separator?
-#        extension_source = File.join(@index_root, the_end.downcase)
-#        transform_html(path, outfile, extension_source)
-#      end
     end
     
     def reindex
@@ -437,7 +425,7 @@ module Inf7
         end
       end
     end
-          
+    
     def check_executable(name)
       location = opt(name) || TTY::Which.which(Inf7::Executables[name])
       Optimist.die "Can't find #{name}: it must be specified, in settings, or in PATH" unless location
@@ -533,5 +521,25 @@ module Inf7
       str.downcase.gsub(/[^-\w]/,'_').gsub(/_+/,'_')
     end
 
+    def author_extbase(pathname)
+      author_dir, ext_name = Pathname.new(pathname).split[-2,2]
+      author_dir = author_dir.basename.to_s
+      ext_name = ext_name.to_s.gsub(/\..*\Z/,'')
+      [ author_dir, ext_name ]
+    end
+
+    # TODO should build big hash first... we're traversing whole extension hierarchy for each extension 'cause of not knowing if author_dir name is different case
+    def find_applicable(author_dir, ext_base, *args)
+      thing_to_match = File.join(author_dir, ext_base).downcase
+#      puts "matching #{thing_to_match}"
+      args.each do |ext_dir|
+        Find.find(ext_dir) do |file|
+          next unless file.end_with?('.i7x')
+#          puts "... #{File.join(author_extbase(file)).downcase} #{file}"
+          return file if thing_to_match == File.join(author_extbase(file)).downcase
+        end
+      end
+      return nil
+    end
   end
 end
