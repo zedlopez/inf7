@@ -4,7 +4,7 @@
 <body>
 <%== Inf7::Template[:index_navbar].render(index_root: index_root, build: build) %>
 <table>
-<% story.split($/).each_with_index do |line,i| %><% j = i+1 %>
+<% source.split($/).each_with_index do |line,i| %><% j = i+1 %>
 <tr><td class="line-number"><%= j %></td><td id="line<%= j %>" class="source-code"><%= line %></td></tr>
 <% end %>
 </table></body></html>

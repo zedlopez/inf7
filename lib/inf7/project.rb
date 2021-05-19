@@ -304,7 +304,7 @@ module Inf7
       when /Extensions\/(Extensions|ExtIndex)\.html/
         "file://#{@index_root}/doc/#{$1}.html"
       when /^\/Extensions/
-        target = string.sub(/\A\/Extensions\/Extensions/,'/Extensions')
+        target = string.sub(/\A\/Extensions\/Extensions/,'/')
         "file://#{@index_root}/doc#{target}"
       when /(R?doc\d+\.html)/
         "file://#{Inf7::Conf.doc}/#{Inf7::Doc.links.key?($1) ? [Inf7::Doc.links[$1][:file],Inf7::Doc.links[$1][:anchor]].join('#') : 'xyzzyplugh'}"
@@ -343,7 +343,6 @@ module Inf7
       if extension
         source_link = Inf7::Doc::Doc.create_element('a', "source code", href: "file://#{extension}")
         node.at_css('body').first_element_child.before(source_link)
-        
       end
       node.at_css('body').first_element_child.before(navbar_div)
       File.open(outfile, 'w') {|f| f.write(Inf7::Doc.to_html(node, :chapter, :html)) }
@@ -352,31 +351,42 @@ module Inf7
     def make_source_html
       story_html = File.join(@index_root, 'story.html')
       unless up_to_date(@story, story_html)
-        Inf7::Template.write(:inform7_source, story_html, story: File.read(@story), name: @name, index_root: @index_root, build: @build)
-      end
-      Dir[File.join(@extensions_dir, '*', '*.i7x')].each do |extension|
-        ext = Pathname.new(extension).expand_path
-        author_dir, ext_name = ext.split[-2,2]
-        author_dir = author_dir.basename
-        dest_dir = File.join(@index_root, 'extensions', author_dir.to_s.downcase)
-        FileUtils.mkdir_p(dest_dir)
-        dest_file = File.join(dest_dir, "#{File.basename(ext_name.to_s, '.i7x').downcase}.html")
-        unless up_to_date(ext, dest_file)
-          Inf7::Template.write(:inform7_source, dest_file, story: File.read(extension), name: "#{ext_name}.html", index_root: @index_root, build: @build)
-        end
+        Inf7::Template.write(:inform7_source, story_html, source: File.read(@story), name: @name, index_root: @index_root, build: @build)
       end
       Inf7::Doc.write_template_files
-      prefix_regexp = %r{^#{File.join(opt(:external),'Documentation')}/}
+
       ext_doc_dir = File.join(@index_root, 'doc')
       FileUtils.mkdir_p(ext_doc_dir)
-      Find.find(File.join(opt(:external),'Documentation')) do |path|
-        next unless path.end_with?('.html')
-        the_end = path.sub(prefix_regexp, '')
-        outfile = File.join(ext_doc_dir, the_end)
-        # TODO: does this break on windows file separator?
-        extension_source = File.join(@index_root, the_end.downcase)
-        transform_html(path, outfile, extension_source)
+
+      Dir[File.join(opt(:external),'Documentation', 'Extensions', '*', '*.html')].each do |extension|
+        ext = Pathname.new(extension).expand_path
+        puts ext
+        author_dir, ext_name = ext.split[-2,2]
+        author_dir = author_dir.basename
+        dest_dir = File.join(@index_root, 'extensions', author_dir.to_s)
+        FileUtils.mkdir_p(dest_dir)
+        dest_file = File.join(dest_dir, ext_name.to_s)
+        ext_base = File.basename(ext_name.to_s, '.html')
+        author_ext = File.join(author_dir, "#{ext_base}.i7x")
+        applicable = [ @extensions_dir, opt(:external), File.join(opt(:internal), 'Extensions') ].map {|x| File.join(x, author_ext) }.find {|y| File.exist?(y) }
+        next unless applicable
+        puts "#{applicable} => #{dest_file}"
+#        unless up_to_date(applicable, dest_file)
+          Inf7::Template.write(:inform7_source, dest_file, source: File.read(applicable), name: ext_name.to_s, index_root: @index_root, build: @build)
+#        end
+        
+        transform_html(extension, File.join(ext_doc_dir, author_dir.to_s, ext_name.to_s), dest_file)
       end
+      transform_html(File.join(opt(:external), 'Documentation', 'Extensions.html'), File.join(ext_doc_dir, 'Extensions.html'))
+#      prefix_regexp = %r{^#{File.join(opt(:external),'Documentation')}/}
+#      Find.find(File.join(opt(:external),'Documentation')) do |path|
+#        next unless path.end_with?('.html')
+#        the_end = path.sub(prefix_regexp, '')
+#        outfile = File.join(ext_doc_dir, the_end)
+#        # TODO: does this break on windows file separator?
+#        extension_source = File.join(@index_root, the_end.downcase)
+#        transform_html(path, outfile, extension_source)
+#      end
     end
     
     def reindex
