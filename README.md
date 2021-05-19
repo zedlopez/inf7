@@ -242,6 +242,14 @@ and which is used depends on whether you specify --release.
 
 There's an important difference between how i6flags and i7flags work. i7flags is additive, but if you specify i6flags you must specify all the i6flags you want to apply to the run: what you specify _replaces_ the defaults.
 
+### Compiling without a project
+
+If you invoke compile and the last argument is a file ending .ni instead of an Inform project, inf7 will create a project in tempdirs to compile it. If the compilation is successful, it'll write the gamefile to the current directory with the same basename as the source, but with an ulx or z8 suffix as appropriate.
+
+```
+$ inf7 compile walk_in_the_park.ni # if successful, there will be a walk_in_the_park.ulx
+```
+
 ### Executables
 
 The compile subcommand will need to have access to ni, inform6, and cBlorb. If these exist in your PATH, you don't have to specify them. Otherwise, you'll want to specify them when you run setup. (If you really wanted, they could be configured on a per project basis or overridden with command-line options when you compile.)
@@ -414,6 +422,13 @@ If you feel like having this level of denial, it can be yours with:
 ```
 $ inf7 fake --name a_walk_in_the_park "A Walk in the Park"
 ```
+
+## Smoke testing an extension
+
+The smoketest subcommand has an ``--ext`` flag that takes an extension (specified including its author dir, as with the install subcommand). It creates a temporary project with a story file that includes the extension and tries compiling it. It takes most of the same parameters as init; in particular, be sure that ``--external`` is set appropriately for dependencies to be found.
+
+```
+$ inf7 smoketest ~/external/
 
 ## Cautions
 

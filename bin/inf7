@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require 'inf7'
 require 'optimist'
+require 'fileutils'
 
 class Inf
   Commands = { "setup" => "Set up inf7 environment (do this first)",
@@ -12,7 +13,8 @@ class Inf
                "ext" => "Create extension for project",
                "fake" => "Create a fake equivalent to a project",
                "doc" => "Regenerate documentation",
-               "epub" => "Create epub"
+               "epub" => "Create epub",
+               "smoketest" => "Smoke test an extension"
              }
   
   attr_reader :main_opts, :command, :subopts
@@ -91,7 +93,11 @@ class Inf
       opt :verbose, "Verbose compilation output", default: false, short: '-v'
     end
     @subopts.reject! {|k,v| v.nil? or !Inf7::Project::CompileFields.member?(k) }
-    Inf7::Project[ARGV,@subopts].compile
+    if ARGV.first.end_with?('.ni')
+      Inf7::Project.bare_compile(ARGV.first, @subopts)
+    else
+      Inf7::Project[ARGV,@subopts].compile
+    end
   end
   def opt_init
     @subopts = Optimist::options do
@@ -170,15 +176,18 @@ class Inf
     project = Inf7::Project[ARGV,@subopts.reject {|k,v| v.nil? or !%i{ author name quiet }.member?(k) }]
     project.create_extension
   end
+
   def opt_install
     @subopts = Optimist::options do
       banner "options for install"
       opt :ext, "Path of desired extension", type: :string, short: :none
       opt :init, "Install to config, not to a project"
-      opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'    end
+      opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
+    end
     Optimist::die :ext, "not specified" unless @subopts[:ext]
     Inf7::Project.install(@subopts, ARGV)
   end
+
   def opt_fake
     @subopts = Optimist::options do
       banner "options for fake"
@@ -204,6 +213,25 @@ class Inf
     end
     Inf7::Doc.epub(@subopts)
   end
+
+  def opt_smoketest
+    @subopts = Optimist::options do
+      banner "Smoketest an extension"
+      opt :ext, "Path of desired extension", type: :string, short: :none, required: true
+      opt :internal, "Inform internal directory", type: :string, short: :none
+      opt :external, "Inform external directory", type: :string, short: :none
+      opt :i6flagstest, "I6 test flags", type: :string, short: :none
+      opt :i6flagsrelease, "I6 release flags", type: :string, short: :none
+      opt :i7flagstest, "I7 test flags", type: :string, short: :none
+      opt :i7flagsrelease, "I7 release flags", type: :string, short: :none
+      opt :format, "Format (glulx or zcode)", type: :string, short: '-f'
+      opt :ni, "Location of ni", type: :string, short: :none
+      opt :inform6, "Location of inform6", type: :string, short: :none
+      opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
+    end
+    Inf7::Project.smoketest(@subopts.reject {|k,v| v.nil?})
+  end
+    
   
 end
 

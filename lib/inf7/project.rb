@@ -7,6 +7,7 @@ require 'tty-which'
 require 'nokogiri'
 require 'pathname'
 require 'optimist'
+require 'tmpdir'
 require 'open3'
 require 'erubi'
 require 'find'
@@ -40,7 +41,32 @@ module Inf7
     
     attr_reader :dir, :name, :settings_file, :story, :source, :extensions_dir, :build, :release, :inf, :uuid, :story_html, :quiet
     attr_accessor :conf #:format, :create_blorb, :nobble_rng
+    def self.bare_compile(filename, **args)
+      Optimist::die "Can't find #{filename}" unless File.exist?(filename)
+      cwd = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        project = Inf7::Project.new(tmpdir, { top: true, allow_prior_existence: true })
+        FileUtils.cp filename, project.story
+        args[:create_blorb] = false
+        args[:index] = false
+        success = project.compile(args)
+        if success
+          FileUtils.cp project.output, File.join(cwd, "#{File.basename(filename, '.ni')}.#{project.suffix}")
+        end
+      end
+    end
 
+    def self.smoketest(options)
+      Optimist::die "Can't find #{options[:ext]}" unless File.exist?(options[:ext])
+      Dir.mktmpdir do |tmpdir|
+#        project = Inf7::Project.new(tmpdir, {}.merge(Inf7::Project::Defaults).merge(Inf7::Conf.conf).merge(options).merge( { top: true, allow_prior_existence: true }))
+        project = Inf7::Project.new(tmpdir, {}.merge(options).merge( { top: true, allow_prior_existence: true }))
+        ext_name, ext_author = Inf7::Project.install({ext: options[:ext], project: project}, [])
+        Inf7::Template.write(:smoketest, project.story, ext: ext_name, author: ext_author)
+        project.compile({index: false})
+      end
+    end
+    
     def self.find_dir(args=[])
       if !args.empty?
         dir = Pathname.new(args.shift).realdirpath
@@ -79,11 +105,16 @@ module Inf7
       Optimist.die("#{ext} does not exist") unless File.exist?(ext)
       author_dir, extension_filename = ext.split[-2,2]
       author_dir = author_dir.basename
-      dest_dir = options[:init] ? File.join(Inf7::Conf.dir, 'extensions') : Inf7::Project[args].extensions_dir
+      if options[:init]
+        dest_dir = File.join(Inf7::Conf.dir, 'extensions')
+      else
+        dest_dir = (options[:project] ? options[:project] : Inf7::Project[args]).extensions_dir
+      end
       destination = File.join(dest_dir, author_dir, extension_filename)
       Optimist.die("#{destination} already exists") if File.exist?(destination)
       FileUtils.mkdir_p(File.join(dest_dir, author_dir))
       FileUtils.cp(ext, destination)
+      return File.basename(extension_filename, '.i7x'), author_dir
     end
     
     def set(conf)
@@ -118,7 +149,7 @@ module Inf7
           @name = File.basename(name)
         end
         @top = Pathname.new(File.join(File.dirname(name), @name))
-        Optimist.die("#{@top} already exists") if File.exist?(@top)
+        Optimist.die("#{@top} already exists") if File.exist?(@top) unless conf[:allow_prior_existence]
         dir = @top.join("#{@name}.inform")
       else 
         if name.match(/(.*)\.inform$/)
@@ -375,12 +406,8 @@ module Inf7
     end
 
     def compile_ni(options)
-      
       ni = check_executable(:ni)
-      if up_to_date(@source, @inf)
-        report "#{@inf} up to date"
-        return true
-      else
+      if (File.exist?(@inf) and File.size(@inf).zero?) or !up_to_date(@source, @inf) or Dir[File.join(@extensions_dir, '*', '*.i7x')].any? {|ext| !up_to_date(ext, @source) }
         arg_list = []
         i7flags = options.key?(:i7flags)  ? options[:i7flags] : (options[:release] ? opt(:i7flagsrelease) : opt(:i7flagstest))
         arg_list << i7flags if !i7flags.empty?
@@ -405,9 +432,13 @@ module Inf7
         else
           STDERR.puts "Attempted to compile #{word_count}-word source."
           STDERR.write(stderr)
+          return false
         end
         make_fakes if @conf[:fake]
-        return rc.exitstatus.zero?
+        return true
+      else
+        report "#{@inf} up to date"
+        return true
       end
     end
 
@@ -424,31 +455,33 @@ module Inf7
         if rc.exitstatus.zero?
           report opt(:verbose) ? stdout : stdout.split($/).select {|l| l.match(/\A(Inform|In:|Out:)/) }.join("\n")
         else
+          STDERR.write(stdout)
           STDERR.write(stderr)
+          return false
         end
         make_fakes if @conf[:fake]
-        return rc.exitstatus.zero?
-
+        return true
       end
     end
 
     def compile_cblorb(options)
-      if opt(:create_blorb)
-        report # output newline
-        cblorb = check_executable(:cblorb)
-        # TODO to check blorb mtime we need to check everything in Release
-        if up_to_date(output, blorb)
-          report "#{blorb} up to date"
+      return true unless opt(:create_blorb)
+      report # output newline
+      cblorb = check_executable(:cblorb)
+      # TODO to check blorb mtime we need to check everything in Release
+      if up_to_date(output, blorb)
+        report "#{blorb} up to date"
+      else
+        report "#{cblorb} #{opt(:cblorbflags)} #{release_blurb} #{blorb}"
+        stdout, stderr, rc = Open3.capture3(cblorb, opt(:cblorbflags), release_blurb.to_s, blorb.to_s)
+        if rc.exitstatus.zero?
+          report opt(:verbose) ? stdout : stdout.split($/).map {|l| l.match(/\A!\s+((cBlorb|Completed).*)/); $1}.compact.join("\n")
         else
-          report "#{cblorb} #{opt(:cblorbflags)} #{release_blurb} #{blorb}"
-          stdout, stderr, rc = Open3.capture3(cblorb, opt(:cblorbflags), release_blurb.to_s, blorb.to_s)
-          if rc.exitstatus.zero?
-            report opt(:verbose) ? stdout : stdout.split($/).map {|l| l.match(/\A!\s+((cBlorb|Completed).*)/); $1}.compact.join("\n")
-          else
-            STDERR.write(stderr)
-          end
-          make_fakes if @conf[:fake]
+          STDERR.write(stderr)
+          return false
         end
+        make_fakes if @conf[:fake]
+        return true
       end
     end
 
@@ -462,4 +495,3 @@ module Inf7
 
   end
 end
-
