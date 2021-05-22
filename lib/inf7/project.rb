@@ -59,10 +59,10 @@ module Inf7
     def self.smoketest(options)
       Optimist::die "Can't find #{options[:ext]}" unless File.exist?(options[:ext])
       Dir.mktmpdir do |tmpdir|
-        project = Inf7::Project.new(tmpdir, {}.merge(options).merge( { top: true, allow_prior_existence: true }))
+        project = Inf7::Project.new(tmpdir, {}.merge(options).merge( { top: true, allow_prior_existence: true, index: false }))
         ext_name, ext_author = Inf7::Project.install({ext: options[:ext], project: project}, [])
         Inf7::Template.write(:smoketest, project.story, ext: ext_name, author: ext_author)
-        project.compile({index: false})
+        project.compile
       end
     end
     

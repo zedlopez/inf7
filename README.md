@@ -39,7 +39,7 @@ After a successful compilation, you could run A Walk in the Park.inform/Build/ou
 $ firefox "A Walk in the Park.inform/index.html"
 ```
 
-All internal links to your story's source, installed extensions, or documentation will work. If you select the one of the text icons that paste code directly into the source window in the IDE, the corresponding text will be copied to the clipboard instead; you could then paste it into your editor.
+All internal links to your story's source, installed extensions, or documentation will work. If you select the one of the text icons that paste code directly into the source window in the IDE, the corresponding text will be copied to the clipboard instead; you could then paste it into your editor. It can use a hacked version of Andrew Plotkin's [i7tohtml.py](https://github.com/erkyrath/glk-dev/blob/master/i7tohtml.py) to format the Inform 7 source code if you install pygments and configure the i7tohtml setting to point to it; see INSTALL.md.
 
 After compilation, a problems.html file (with appropriately rewritten links) is created alongside the original Problems.html in the Build directory; check it for easy access to the bits of documentation the compiler thought were relevant to the errors.
 
@@ -175,7 +175,7 @@ This will create "Astounding Journey.materials" with Release and Extensions subd
 
 You may specify the name with .inform, but you don't have to.
 
-inf7 will work seamlessly with projects created by the IDE; the converse should be true as well (though of course if your most recent compilation was with the IDE, inf7's rewritten Project Index will be out of date).
+inf7 should work seamlessly with projects created by the IDE; the converse should be true as well (though of course if your most recent compilation was with the IDE, inf7's rewritten Project Index will be out of date).
 
 ```
 inf7 init "Astounding Journey.inform"
