@@ -425,14 +425,26 @@ $ inf7 fake --name a_walk_in_the_park "A Walk in the Park"
 
 ## Smoke testing an extension
 
-The smoketest subcommand has an ``--ext`` flag that takes an extension (specified including its author dir, as with the install subcommand). It creates a temporary project with a story file that includes the extension and tries compiling it. It takes most of the same parameters as init; in particular, be sure that ``--external`` is set appropriately for dependencies to be found.
+The test subcommand has an ``--ext`` flag that takes an extension (specified including its author dir, as with the install subcommand). It creates a temporary project with a story file that includes the extension and tries compiling it. It takes most of the same parameters as init; in particular, be sure that ``--external`` is set appropriately for dependencies to be found.
 
 ```
-$ inf7 smoketest ~/external/
+$ inf7 test ~/external/
+
+## Cleaning up
+
+Besides all the files Inform 7 usually leaves behind, inf7 leaves more in its transformed Project Index. You can use the clean subcommand to remove all the contents of:
+
+- the Inform 7 Build directory's contents
+- the Inform 7 Index directory's contents
+- inf7's own .index directory
+
+```
+$ inf7 clean a_walk_in_the_park
+```
 
 ## Cautions
 
-This is an alpha-release. I haven't yet used it to develop a real Inform project. While I don't know of any bugs, I'm sure they exist. The code attempts to be scrupulous about never clobbering any files except the ones it created and, of course, the ones normally clobbered by compilation and nowhere does it outright remove files, but I couldn't say it's impossible it could somehow damage your system.
+This is an alpha-release. I haven't yet used it to develop a real Inform project. While I don't know of any bugs, I'm sure they exist. The code attempts to be scrupulous about never clobbering any files except the ones it created and, of course, the ones normally clobbered by compilation and only the clean subcommand outright removes files, but I couldn't say it's impossible it could somehow damage your system.
 
 The docs-munger and compiler-helper began as independent projects and with both of them I was figuring out what I wanted them to be as I went. The code sorely needs refactoring, which I've already begun, but it's usable as is so I wanted to share and solicit feedback.
 

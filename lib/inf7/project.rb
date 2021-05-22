@@ -347,25 +347,22 @@ module Inf7
       File.open(outfile, 'w') {|f| f.write(Inf7::Doc.to_html(node, :chapter, :html)) }
     end
 
-    def get_source(filename) #, outputfile)
+    def get_source(filename)
       filename = filename.to_s
       begin
         i7tohtml = check_executable(:i7tohtml)
-#        puts [ i7tohtml, '-T', @name, '--css', "file://#{ Inf7::Conf.doc }/style.css", filename ].join(" ")
-        i7tohtml_out, stderr, rc = Open3.capture3(i7tohtml, '-T', @name, '--css', "file://#{ Inf7::Conf.doc }/style.css", filename)
+        i7tohtml_out, stderr, rc = Open3.capture3(i7tohtml, filename)
          return i7tohtml_out
-#        File.open(outputfile, 'w') {|f| f.puts(outputfile, i7tohtml_out) }
       rescue StandardError => e
-                puts "oopsy #{e.message}"
+        STDERR.write(e.message)
         return File.read(filename)
-#        Inf7::Template.write(:inform7_source, outputfile, source: File.read(filename), name: @name, index_root: @index_root, build: @build)
       end
     end
     
     def make_source_html
       story_html = File.join(@index_root, 'story.html')
       unless up_to_date(@story, story_html)
-        source_code = get_source(@story) #, story_html)
+        source_code = get_source(@story)
         Inf7::Template.write(:inform7_source, story_html, source: source_code, name: @name, index_root: @index_root, build: @build)
       end
 
