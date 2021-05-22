@@ -352,20 +352,6 @@ module Inf7
       begin
         i7tohtml = check_executable(:i7tohtml)
         i7tohtml_out, stderr, rc = Open3.capture3(i7tohtml, filename)
-
-#	in_table = false
-#	results = []
-#	i7tohtml_out.split(/\n/).each do |line|
-#	if !in_table and line.match(/^Table of/)
-#         in_table = true
-#	  results << "</table>#{line}<table>\n"
-#	elsif in_table
-#	  if line.match(/\S/)
-#	    results << "</table><table>\n"
-#
-#	end	
-
-
          return i7tohtml_out
       rescue StandardError => e
         STDERR.write(e.message)
