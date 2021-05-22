@@ -84,7 +84,7 @@ Options for settings
   -h, --help    Show this message
 ```
 
-If you specify a project, it is always the last thing on the line. Projects are the only thing that are specified _without_ some particular command-line flag.
+If you specify a project, it is always the last thing on the line. Projects are the only thing that are specified _without_ some particular command-line flag. There's one exception to this, detailed below: the compile subcommand can take an individual file with a .ni suffix as its argument instead of a project.
 
 ## Installation
 
@@ -171,15 +171,15 @@ When you init a new project, you don't need to specify any parameters other than
 inf7 init "Astounding Journey"
 ```
 
-This will create "Astounding Journey.materials" with Release and Extensions subdircetories and "Astounding Journey.inform" containing Settings.plist, uuid.txt, an empty Build directory, and a Source directory containing a story.ni file with the project name as its title and the author from the inf7.yml config file. The author can be changed on the command-line (any of setup's relevant config items may be specified on the init command-line and will persist as that project's settings).
+This will create "Astounding Journey.materials" with Release and Extensions subdirectories and "Astounding Journey.inform" containing Settings.plist, uuid.txt, an empty Build directory, and a Source directory containing a story.ni file with the project name as its title and the author from the inf7.yml config file. The author can be changed on the command-line (any of setup's relevant config items may be specified on the init command-line and will persist as that project's settings).
 
 You may specify the name with .inform, but you don't have to.
-
-inf7 should work seamlessly with projects created by the IDE; the converse should be true as well (though of course if your most recent compilation was with the IDE, inf7's rewritten Project Index will be out of date).
 
 ```
 inf7 init "Astounding Journey.inform"
 ```
+
+inf7 should work seamlessly with projects created by the IDE; the converse should be true as well (though of course if your most recent compilation was with the IDE, inf7's rewritten Project Index will be out of date).
 
 ### --top and --git
 
@@ -233,10 +233,10 @@ Other relevant parameters:
 
 "i7flags" and "i6flags" only exist on the compile command-line, not in project or config settings. In project or config settings there are:
 
---i6flagstest
---i6flagsrelease
---i7flagstest
---i7flagsrelease
+- --i6flagstest
+- --i6flagsrelease
+- --i7flagstest
+- --i7flagsrelease
 
 and which is used depends on whether you specify --release.
 
@@ -319,7 +319,7 @@ There isn't an equivalent ability to modify the config; just edit inf7.yml manua
 
 ## Templates
 
-inf7 creates a lot of different files like the initial story.ni when you run init, or the a new extension when you run ext. The inf7 config directory has a tmpl directory with story.erb and extension.erb, [erubi templates](https://github.com/jeremyevans/erubi). If you'd like to customize the contents of these, you can edit them.
+inf7 creates a lot of different files like the initial story.ni when you run init, or the new extension when you run ext. The inf7 config directory has a tmpl directory with story.erb and extension.erb, [erubi templates](https://github.com/jeremyevans/erubi). If you'd like to customize the contents of these, you can edit them.
 
 There are a lot of other files inf7 creates from templates; it always looks to the config directory for templates first. If it finds one there, it uses that one instead of its own default. If you want to customize the style of the documentation, copy style.erb to your config dir's tmpl subdirectory and modify it as you see fit. This gives considerable flexibility and commensurate ability to shoot yourself in the foot. But if you mess things up, you can always delete the config directory's copy and it'll go back to the default, or you can copy the default over the config's copy.
 
@@ -327,21 +327,9 @@ To customize the .gitignore new projects get, copy tmpl/gitignore.erb to your co
 
 ## Extensions
 
-### Creating a new extension
-
-The ext subcommand allows making a new extension.
-
-```
-$ inf7 ext --name "Flexible Fluids" "Astounding Journey"
-```
-
-You may specify an author command-line flag to override the project or config setting. The initial contents are from the extension template; see Templates for info on how to modify that.
-
-As with installation, you'll have to include it manually to make use of it.
-
 ### Installing an existing extension
 
-To install a particular extension in a particular project, or in your config dir for automatic inclusion in the extensions directories of subsequent projects, use the install command. The path specified for the extension must include the extension's author-named parent directory.
+To install a particular extension in a particular project, or in your config dir for automatic inclusion in the extensions directories of subsequent projects, use the install command. The extension must exist under a directory whose name is the author's name, as usual.
 
 Installing for a particular project:
 
@@ -360,6 +348,18 @@ $ inf7 install --init --ext ~/inform/Dannii\ Willis/Xorshift.i7x
 ```
 
 In either case, copying directly to the relevant directory works as well.
+
+### Creating a new extension
+
+The ext subcommand allows making a new extension.
+
+```
+$ inf7 ext --name "Flexible Fluids" "Astounding Journey"
+```
+
+You may specify an author command-line flag to override the project or config setting. The initial contents are from the extension template; see Templates for info on how to modify that.
+
+As with installation, you'll have to include it manually to make use of it.
 
 ## Regenerating the docs
 
@@ -397,8 +397,16 @@ Out:   Glulx story file 1.210506 (537.5K long):
 /usr/local/bin/cBlorb -unix /home/zed/inform/A Walk in the Park.inform/Release.blurb /home/zed/inform/A Walk in the Park.inform/Build/output.gblorb
 cBlorb 1.2 [executing on Thursday 6 May 2021 at 11:06.18]
 Completed: wrote blorb file of size 642210 bytes (1 picture(s), 0 sound(s))
-$ ls
-a_walk_in_the_park.gblorb  a_walk_in_the_park.inf  a_walk_in_the_park.ni  a_walk_in_the_park.ulx  debug_log.txt  extensions  index.html  problems.html  release
+$ ls -1
+a_walk_in_the_park.gblorb
+a_walk_in_the_park.inf
+a_walk_in_the_park.ni
+a_walk_in_the_park.ulx
+debug_log.txt
+extensions
+index.html
+problems.html
+release
 ```
 
 Here's the trick:
@@ -425,10 +433,11 @@ $ inf7 fake --name a_walk_in_the_park "A Walk in the Park"
 
 ## Smoke testing an extension
 
-The test subcommand has an ``--ext`` flag that takes an extension (specified including its author dir, as with the install subcommand). It creates a temporary project with a story file that includes the extension and tries compiling it. It takes most of the same parameters as init; in particular, be sure that ``--external`` is set appropriately for dependencies to be found.
+The test subcommand has an ``--ext`` flag that takes an extension. It creates a temporary project with a story file that includes the extension and tries compiling it. It takes most of the same parameters as init; in particular, be sure that ``--external`` is set appropriately for dependencies to be found.
 
 ```
-$ inf7 test ~/external/
+$ inf7 test --ext ~/external/Friends\ of\ I7/6M62\ Patches.i7x
+```
 
 ## Cleaning up
 
@@ -468,4 +477,5 @@ For background on Inform 7 compilation CLI options, see [How to use ni, inform6,
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+This project is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT, except for i7tohtml which is public domain.
+
