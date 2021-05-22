@@ -83,22 +83,6 @@ lexer.add_filter(CleanI6Filter())
 formatter = HtmlFormatter(nowrap=True, classprefix='i7', lineseparator='\n')
 result = highlight(code, lexer, formatter)
 
-header_block = '''<!doctype html>
-<html>
-<head>
-<title>$TITLE$: Source Code</title>
-<link rel="stylesheet" href="$CSS$"></head>
-<body>
-<table><tbody>
-'''
-
-footer_block = '''
-</tbody></table>
-</body>
-</html>
-'''
-
-
 encode_ascii = codecs.getencoder('ascii')
 spaces_re = re.compile('  +')
 
@@ -110,12 +94,8 @@ def spaces_replace(match):
         return ' '
     return ('&nbsp;' * (num-1)) + ' '
 
-#print(header_block.replace('$TITLE$', opts.title).replace('$CSS$', opts.css))
-#print('<!-- -->');
 for i, ln in enumerate(result.split('\n')):
     
-    # Detab (assuming four spaces per tab).
-    ln = ln.replace('\t', '    ')
     ln = ln.rstrip()
 
     # Convert any sequence of two or more spaces to a string of NBSP
@@ -126,4 +106,4 @@ for i, ln in enumerate(result.split('\n')):
     ln = encode_ascii(ln, 'xmlcharrefreplace')[0].decode()
     print(ln);
 
-#print(footer_block)
+

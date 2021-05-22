@@ -4,8 +4,21 @@
 <title><%= name %></title></head>
 <body>
 <%== Inf7::Template[:index_navbar].render(index_root: index_root, build: build) %>
-<table class="source-table">
-<% source.split($/).each_with_index do |line,i| %><% j = i+1 %>
-<tr><td class="line-number"><%= j %></td><td id="line<%= j %>" class="source-code"><%== line %></td></tr>
-<% end %>
+<table class="source-table"><tbody>
+<% in_table = false -%>
+<% source.split($/).each_with_index do |line,i| %><% j = i+1 -%>
+<% if !in_table -%>
+<% if line.match(/^Table of/) %>
+<tr><td class="line-number"><%= j %></td><td id="line<%= j %>"><%== line %></td></tr></table><table class="source-table"><tbody>
+<% in_table = true -%>
+<% else -%>
+<tr><td class="line-number"><%= j %></td><td id="line<%= j %>"><%== line.gsub(/\t/, "&ensp;&ensp;&ensp;&ensp;") %></td></tr><% end -%>
+<% else -%>
+<% if line.strip.match(/\S/) and !line.match(/^with\s+\d+\s+blank\s+row/) -%>
+<tr><td class="line-number"><%= j %></td><td id="line<%= j %>"><%== line.gsub(/\t/, "</td><td>") %></td></tr><% else -%>
+<% in_table = false -%>
+</tbody></table><table class="source-table"><tbody><tr><td class="line-number"><%= j %></td><td id="line<%= j %>"><%== line.gsub(/\t/, "&ensp;&ensp;&ensp;&ensp;") %></td></tr><% end -%>
+<% end -%>
+<% end -%>
+</tbody>
 </table></body></html>
