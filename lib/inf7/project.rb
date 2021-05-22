@@ -7,6 +7,7 @@ require 'tty-which'
 require 'nokogiri'
 require 'pathname'
 require 'optimist'
+require 'tempfile'
 require 'tmpdir'
 require 'open3'
 require 'erubi'
@@ -347,23 +348,43 @@ module Inf7
       File.open(outfile, 'w') {|f| f.write(Inf7::Doc.to_html(node, :chapter, :html)) }
     end
 
+    
+
+    
     def get_source(filename)
       filename = filename.to_s
-      begin
-        i7tohtml = check_executable(:i7tohtml)
-        i7tohtml_out, stderr, rc = Open3.capture3(i7tohtml, filename)
-         return i7tohtml_out
-      rescue StandardError => e
-        STDERR.write(e.message)
+      i7tohtml = check_executable(:i7tohtml)
+      if i7tohtml
+        lines = File.read(filename).split(/\n/) # TODO
+        split_file = { false => [], true => [], results: {} }
+        doc_yet = false
+        lines.each do |line|
+          doc_yet = true if line.strip.match(/----\s+documentation\s+----/i)
+          pp doc_yet
+          split_file[doc_yet] << line
+        end
+        [ false, true ].each do |bool|
+          Tempfile.open do |f|
+            f.write(split_file[bool].join("\n"))
+            f.close
+            i7tohtml_out, stderr, rc = Open3.capture3(i7tohtml, f.path)
+            split_file[:results][bool] = i7tohtml_out
+          end
+        end
+        return split_file[:results][false], split_file[:results][true] 
+      else
         return File.read(filename)
       end
     end
-    
+    #    TODO I am in the middle. get_source must be continued to be rewritten to
+    # put plain documentation on top and then line-numbered source.
+    # must redo templates for this to work
     def make_source_html
       story_html = File.join(@index_root, 'story.html')
       unless up_to_date(@story, story_html)
-        source_code = get_source(@story)
-        Inf7::Template.write(:inform7_source, story_html, source: source_code, name: @name, index_root: @index_root, build: @build)
+        get_source(@story, :inform7_source, story_html, source: source_code, name: @name, index_root: @index_root, build: @build)
+#        source_code = get_source(@story)
+#        Inf7::Template.write(:inform7_source, story_html, source: source_code, name: @name, index_root: @index_root, build: @build)
       end
 
       Inf7::Doc.write_template_files
@@ -371,21 +392,35 @@ module Inf7
       ext_doc_dir = File.join(@index_root, 'doc')
       FileUtils.mkdir_p(ext_doc_dir)
 
-      Dir[File.join(opt(:external),'Documentation', 'Extensions', '*', '*.html')].each do |extension|
-        author_dir, ext_base = author_extbase(extension)
-        applicable = find_applicable(author_dir, ext_base, @extensions_dir, opt(:external), File.join(opt(:internal), 'Extensions'))
-#        puts applicable ? "found #{applicable}" : "nothing found"
-        next unless applicable
-        dest_dir = File.join(@index_root, 'source', author_dir)
-        FileUtils.mkdir_p(dest_dir)
-        dest_file = File.join(dest_dir, "#{ext_base}.html")
-        unless up_to_date(applicable, dest_file)
-          source_code = get_source(applicable)
-          Inf7::Template.write(:inform7_source, dest_file, source: source_code, name: ext_base, index_root: @index_root, build: @build)
+      extension_locations = Hash.new {|h,k| h[k] = Hash.new {|l,m| l[m] = [] } }
+      [ @extensions_dir, opt(:external), File.join(opt(:internal), 'Extensions') ].each do |ext_dir|
+        Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
+          author_dir, ext_name = *author_extbase(extension)
+          extension_locations[author_dir.downcase][ext_name.downcase] << extension
         end
-        doc_dest_file = File.join(ext_doc_dir, author_dir.downcase, "#{ext_base.downcase}.html")
-        unless up_to_date(extension, doc_dest_file)
-          transform_html(extension, doc_dest_file, dest_file)
+      end
+
+      extension_locations.keys.each do |author_dir|
+        extension_locations[author_dir].each_pair do |ext_base, list|
+          next unless list and !list.empty?
+          applicable = list.first
+          #      Dir[File.join(opt(:external),'Documentation', 'Extensions', '*', '*.html')].each do |extension|
+#        author_dir, ext_base = author_extbase(extension)
+#        applicable = (extension_locations[author_dir.downcase][ext_base.downcase] and !extension_locations[author_dir.downcase][ext_base.downcase].empty?) ? extension_locations[author_dir.downcase][ext_base.downcase].first : nil
+#        puts applicable ? "found #{applicable}" : "nothing found for #{author_dir}/#{ext_base}"
+#        next unless applicable
+          dest_dir = File.join(@index_root, 'source', author_dir)
+          FileUtils.mkdir_p(dest_dir)
+          dest_file = File.join(dest_dir, "#{ext_base}.html")
+          unless up_to_date(applicable, dest_file)
+            get_source(applicable, :inform7_source, dest_file, source: source_code, name: ext_base, index_root: @index_root, build: @build)
+#            source_code = get_source(applicable)
+#            Inf7::Template.write(:inform7_source, dest_file, source: source_code, name: ext_base, index_root: @index_root, build: @build)
+          end
+          doc_dest_file = File.join(ext_doc_dir, author_dir.downcase, "#{ext_base.downcase}.html")
+          unless up_to_date(applicable, doc_dest_file)
+            transform_html(applicable, doc_dest_file, dest_file)
+          end
         end
       end
       transform_html(File.join(opt(:external), 'Documentation', 'Extensions.html'), File.join(ext_doc_dir, 'Extensions.html'))
@@ -447,14 +482,18 @@ module Inf7
       end
     end
     
-    def check_executable(name)
-      location = opt(name) || TTY::Which.which(Inf7::Executables[name])
+    def check_executable_or_die(name)
+      location = check_executable(name)
       Optimist.die "Can't find #{name}: it must be specified, in settings, or in PATH" unless location
       location
     end
 
+    def check_executable(name)
+      opt(name) || TTY::Which.which(Inf7::Executables[name])
+    end
+
     def compile_ni(options)
-      ni = check_executable(:ni)
+      ni = check_executable_or_die(:ni)
       if (File.exist?(@inf) and File.size(@inf).zero?) or !up_to_date(@source, @inf) or Dir[File.join(@extensions_dir, '*', '*.i7x')].any? {|ext| !up_to_date(ext, @source) }
         arg_list = []
         i7flags = options.key?(:i7flags)  ? options[:i7flags] : (options[:release] ? opt(:i7flagsrelease) : opt(:i7flagstest))
@@ -498,7 +537,7 @@ module Inf7
         report "#{output} up to date"
         return true
       else
-        inform6 = check_executable(:inform6)
+        inform6 = check_executable_or_die(:inform6)
         report "#{inform6} #{i6flags_arg}#{i6flag} #{inf} #{output}"
         stdout, stderr, rc = Open3.capture3(inform6, "#{i6flags_arg}#{i6flag}", inf.to_s, output.to_s)
         if rc.exitstatus.zero?
@@ -516,7 +555,7 @@ module Inf7
     def compile_cblorb(options)
       return true unless opt(:create_blorb)
       report # output newline
-      cblorb = check_executable(:cblorb)
+      cblorb = check_executable_or_die(:cblorb)
       # TODO to check blorb mtime we need to check everything in Release
       if up_to_date(output, blorb)
         report "#{blorb} up to date"
@@ -547,20 +586,6 @@ module Inf7
       author_dir = author_dir.basename.to_s
       ext_name = ext_name.to_s.gsub(/\..*\Z/,'')
       [ author_dir, ext_name ]
-    end
-
-    # TODO should build big hash first... we're traversing whole extension hierarchy for each extension 'cause of not knowing if author_dir name is different case
-    def find_applicable(author_dir, ext_base, *args)
-      thing_to_match = File.join(author_dir, ext_base).downcase
-#      puts "matching #{thing_to_match}"
-      args.each do |ext_dir|
-        Find.find(ext_dir) do |file|
-          next unless file.end_with?('.i7x')
-#          puts "... #{File.join(author_extbase(file)).downcase} #{file}"
-          return file if thing_to_match == File.join(author_extbase(file)).downcase
-        end
-      end
-      return nil
     end
   end
 end
