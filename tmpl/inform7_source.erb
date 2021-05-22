@@ -1,10 +1,11 @@
+<!doctype html>
 <html><head>
 <link rel="stylesheet" href="file://<%== Inf7::Conf.doc %>/style.css">
 <title><%= name %></title></head>
 <body>
 <%== Inf7::Template[:index_navbar].render(index_root: index_root, build: build) %>
-<table>
+<table class="source-table">
 <% source.split($/).each_with_index do |line,i| %><% j = i+1 %>
-<tr><td class="line-number"><%= j %></td><td id="line<%= j %>" class="source-code"><%= line %></td></tr>
+<tr><td class="line-number"><%= j %></td><td id="line<%= j %>" class="source-code"><%== line %></td></tr>
 <% end %>
 </table></body></html>

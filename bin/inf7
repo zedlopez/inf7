@@ -14,7 +14,8 @@ class Inf
                "fake" => "Create a fake equivalent to a project",
                "doc" => "Regenerate documentation",
                "epub" => "Create epub",
-               "smoketest" => "Smoke test an extension"
+               "test" => "Test an extension",
+               "clean" => "Clean a project's build output"
              }
   
   attr_reader :main_opts, :command, :subopts
@@ -63,6 +64,7 @@ class Inf
       opt :top, "Create another dir over .inform and .materials", short: :none
       opt :git, "Support git", short: :none
       opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
+      opt :i7tohtml, "Location of i7tohtml.py", type: :string
     end
     @subopts.reject! {|k,v| v.nil? or !Inf7::Project::Fields.member?(k) }
     Optimist::die :internal, "must be Inform's internal directory" unless File.exist?(File.join(@subopts[:internal], 'Extensions', 'Graham Nelson', 'Standard Rules.i7x'))
@@ -214,9 +216,17 @@ class Inf
     Inf7::Doc.epub(@subopts)
   end
 
-  def opt_smoketest
+  def opt_clean
     @subopts = Optimist::options do
-      banner "Smoketest an extension"
+      banner "Clean project's files"
+    end
+    project = Inf7::Project[ARGV,@subopts.reject {|k,v| v.nil?}]
+    project.clean
+  end
+    
+  def opt_test
+    @subopts = Optimist::options do
+      banner "test an extension"
       opt :ext, "Path of desired extension", type: :string, short: :none, required: true
       opt :internal, "Inform internal directory", type: :string, short: :none
       opt :external, "Inform external directory", type: :string, short: :none
@@ -231,7 +241,6 @@ class Inf
     end
     Inf7::Project.smoketest(@subopts.reject {|k,v| v.nil?})
   end
-    
   
 end
 

@@ -59,7 +59,6 @@ module Inf7
     def self.smoketest(options)
       Optimist::die "Can't find #{options[:ext]}" unless File.exist?(options[:ext])
       Dir.mktmpdir do |tmpdir|
-        #        project = Inf7::Project.new(tmpdir, {}.merge(Inf7::Project::Defaults).merge(Inf7::Conf.conf).merge(options).merge( { top: true, allow_prior_existence: true }))
         project = Inf7::Project.new(tmpdir, {}.merge(options).merge( { top: true, allow_prior_existence: true }))
         ext_name, ext_author = Inf7::Project.install({ext: options[:ext], project: project}, [])
         Inf7::Template.write(:smoketest, project.story, ext: ext_name, author: ext_author)
@@ -339,20 +338,37 @@ module Inf7
       node = Nokogiri::HTML(contents)
       navbar_div = Inf7::Doc::Doc.create_element('div')
       navbar_div.inner_html = Inf7::Template[:index_navbar].render(index_root: @index_root, build: @build.to_s)
-      
       if extension
-        source_link = Inf7::Doc::Doc.create_element('a', "source code", href: "file://#{extension}")
-        node.at_css('body').first_element_child.before(source_link)
+        source_link = Inf7::Doc::Doc.create_element('a', "Extension Source Code", href: "file://#{extension}", class: "index-navbar")
+        #        node.at_css('body').first_element_child.before(source_link)
+        navbar_div.first_element_child << source_link
       end
       node.at_css('body').first_element_child.before(navbar_div)
       File.open(outfile, 'w') {|f| f.write(Inf7::Doc.to_html(node, :chapter, :html)) }
     end
 
+    def get_source(filename) #, outputfile)
+      filename = filename.to_s
+      begin
+        i7tohtml = check_executable(:i7tohtml)
+#        puts [ i7tohtml, '-T', @name, '--css', "file://#{ Inf7::Conf.doc }/style.css", filename ].join(" ")
+        i7tohtml_out, stderr, rc = Open3.capture3(i7tohtml, '-T', @name, '--css', "file://#{ Inf7::Conf.doc }/style.css", filename)
+         return i7tohtml_out
+#        File.open(outputfile, 'w') {|f| f.puts(outputfile, i7tohtml_out) }
+      rescue StandardError => e
+                puts "oopsy #{e.message}"
+        return File.read(filename)
+#        Inf7::Template.write(:inform7_source, outputfile, source: File.read(filename), name: @name, index_root: @index_root, build: @build)
+      end
+    end
+    
     def make_source_html
       story_html = File.join(@index_root, 'story.html')
       unless up_to_date(@story, story_html)
-        Inf7::Template.write(:inform7_source, story_html, source: File.read(@story), name: @name, index_root: @index_root, build: @build)
+        source_code = get_source(@story) #, story_html)
+        Inf7::Template.write(:inform7_source, story_html, source: source_code, name: @name, index_root: @index_root, build: @build)
       end
+
       Inf7::Doc.write_template_files
 
       ext_doc_dir = File.join(@index_root, 'doc')
@@ -361,13 +377,14 @@ module Inf7
       Dir[File.join(opt(:external),'Documentation', 'Extensions', '*', '*.html')].each do |extension|
         author_dir, ext_base = author_extbase(extension)
         applicable = find_applicable(author_dir, ext_base, @extensions_dir, opt(:external), File.join(opt(:internal), 'Extensions'))
-        puts applicable ? "found #{applicable}" : "nothing found"
+#        puts applicable ? "found #{applicable}" : "nothing found"
         next unless applicable
         dest_dir = File.join(@index_root, 'source', author_dir)
         FileUtils.mkdir_p(dest_dir)
         dest_file = File.join(dest_dir, "#{ext_base}.html")
         unless up_to_date(applicable, dest_file)
-          Inf7::Template.write(:inform7_source, dest_file, source: File.read(applicable), name: ext_base, index_root: @index_root, build: @build)
+          source_code = get_source(applicable)
+          Inf7::Template.write(:inform7_source, dest_file, source: source_code, name: ext_base, index_root: @index_root, build: @build)
         end
         doc_dest_file = File.join(ext_doc_dir, author_dir.downcase, "#{ext_base.downcase}.html")
         unless up_to_date(extension, doc_dest_file)
@@ -399,6 +416,13 @@ module Inf7
       File.open(@conf[:fakedir].join('.i7_alias'), 'w') {|f| f.write(@dir)}
       report "Created #{@conf[:fake]} as fake version of #{@name}"
     end
+
+    def clean
+      [ @dir.join('Index'), @index_root, @build ].each do |dirty|
+        Dir[File.join(dirty, '*')].each {|removable| FileUtils.rm_rf(removable) }
+      end
+    end
+
     
     private
 
