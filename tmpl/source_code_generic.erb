@@ -1,0 +1,15 @@
+<% in_table = false -%>
+<% lines.each_with_index do |line,i| %><% j = i+1 -%>
+<% if !in_table -%>
+<% if line.match(/^Table of/) %>
+<tr><td<% if line_nos %> class="line-number"><%= j %><% else %>><% end %></td><td <% if line_nos %>id="line<%= j %>"<% end %>><%== line %></td></tr></table><table class="source-table"><tbody>
+<% in_table = true -%>
+<% else -%>
+<tr><td<% if line_nos %> class="line-number"><%= j %><% else %>><% end %></td><td <% if line_nos %>id="line<%= j %>"<% end %>><%== line.gsub(/\t/, "&ensp;&ensp;&ensp;&ensp;") %></td></tr><% end -%>
+<% else -%>
+<% if line.strip.match(/\S/) and !line.match(/^with\s+\d+\s+blank\s+row/) -%>
+<tr><td<% if line_nos %> class="line-number"><%= j %><%else %>><% end %></td><td <% if line_nos %>id="line<%= j %>"<% end %>><%== line.gsub(/\t/, "</td><td>") %></td></tr><% else -%>
+<% in_table = false -%>
+</tbody></table><table class="source-table"><tbody><tr><td<% if line_nos %> class="line-number"><%= j %><% else %>><% end %></td><td <% if line_nos %>id="line<%= j %>"<% end %>><%== line.gsub(/\t/, "&ensp;&ensp;&ensp;&ensp;") %></td></tr><% end -%>
+<% end -%>
+<% end -%>

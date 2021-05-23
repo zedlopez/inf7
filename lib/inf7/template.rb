@@ -25,12 +25,13 @@ module Inf7
       end
       
       def [](template_name)
-        Template.new(read(template_name))
+        Template.new(template_name)
       end
     end
-    def initialize(template_string)
-      raise AurgementError.new("Must specify non-empty string") unless template_string and !template_string.empty?
-      @erubi = Erubi::Engine.new(template_string, escape: true)
+    def initialize(template)
+      raise ArgumentError.new("Must specify non-empty string") unless template and !template.empty?
+      @template = template
+      @erubi = Erubi::Engine.new(Inf7::Template.read(@template), escape: true)
     end
 
     def render(**hash)

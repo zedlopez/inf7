@@ -50,7 +50,7 @@ module Inf7
         FileUtils.cp filename, project.story
         args[:create_blorb] = false
         args[:index] = false
-        success = project.compile(args)
+        success = project.compile(args.merge({temp: true}))
         if success
           FileUtils.cp project.output, File.join(cwd, "#{File.basename(filename, '.ni')}.#{project.suffix}")
         end
@@ -63,7 +63,7 @@ module Inf7
         project = Inf7::Project.new(tmpdir, {}.merge(options).merge( { top: true, allow_prior_existence: true, index: false }))
         ext_name, ext_author = Inf7::Project.install({ext: options[:ext], project: project}, [])
         Inf7::Template.write(:smoketest, project.story, ext: ext_name, author: ext_author)
-        project.compile
+        project.compile({ temp: true })
       end
     end
     
@@ -200,6 +200,7 @@ module Inf7
         write_uuid
         write_settings_file
         write_rc
+        write_initial_index
         puts "Created #{@dir}" unless quiet
       else
         File.open(@rc,'w') {|f| f.write(YAML.dump({ create_blorb: opt(:create_blorb), nobble_rng: opt(:nobble_rng), :format => opt(:format)}))} if !File.exist?(@rc)
@@ -210,8 +211,17 @@ module Inf7
         @conf[:format] = Inf7::Zcode_to_format[settings.at_xpath("//integer[preceding-sibling::key[contains(text(),'IFSettingZCodeVersion')]]").inner_text]
         @conf = @conf.merge(conf) if conf
       end
+      index_html = @dir.join('index.html')
+      FileUtils.ln_s(File.join(@index_root,'Index','Welcome.html'), index_html) unless File.symlink?(index_html)
     end
 
+    def write_initial_index
+      [ { file: File.join(@index_root, 'Index', 'Welcome.html'), head: 'Empty Index', text: 'Either this is a new project or the last compile was unsuccessful.' },
+        { file: File.join(@build, 'problems.html'), head: 'No problem!', text: 'No compile has been attempted.' }, ].each do |h|
+        Inf7::Template.write(:generic_page, h[:file], **h)
+      end
+    end
+    
     def write_uuid
       File.open(@uuid,'w') {|f| f.write(SecureRandom.uuid) }
     end
@@ -305,7 +315,7 @@ module Inf7
         "file://#{@index_root}/doc/#{$1}.html"
       when /^\/Extensions/
         target = string.sub(/\A\/Extensions\/Extensions/,'')
-        "file://#{@index_root}/doc#{target.downcase}"
+        "file://#{@index_root}/source#{target.downcase}"
       when /(R?doc\d+\.html)/
         "file://#{Inf7::Conf.doc}/#{Inf7::Doc.links.key?($1) ? [Inf7::Doc.links[$1][:file],Inf7::Doc.links[$1][:anchor]].join('#') : 'xyzzyplugh'}"
       else
@@ -313,8 +323,9 @@ module Inf7
       end
     end
 
-    def transform_html(infile, outfile, extension = nil)
-      return if up_to_date(infile, outfile)
+    def transform_html(infile, outfile, override: false)
+
+      return if up_to_date(infile, outfile) unless override
       FileUtils.mkdir_p(File.dirname(outfile))
       contents = File.read(infile)
       contents.gsub!(%r{"inform:/([^"]+)"}) {|match| %Q{"#{deform($1)}"} }
@@ -330,97 +341,80 @@ module Inf7
         author = File.dirname($1)
         %Q{"file://#{File.join(@index_root, 'source', author, ext_name + '.html' + $2)}"}
       end
-      # this requires real DOM manipulation: the openFile's are to the author dirs, not individual files. Need to get filename from preceding link. 
-      #      contents.gsub!(%r{'javascript:project\(\)\.openFile\(".*\.materials/Extensions/([^"]+)"\)'}) do |m|
-      #        author, ext_name = $1.split('/')
-      #        %Q{"file://#{File.join(@index_root, 'extensions', author.downcase, ext_name.downcase + '.html')}"}
-      #      end
-      
       node = Nokogiri::HTML(contents)
       navbar_div = Inf7::Doc::Doc.create_element('div')
       navbar_div.inner_html = Inf7::Template[:index_navbar].render(index_root: @index_root, build: @build.to_s)
-      if extension
-        source_link = Inf7::Doc::Doc.create_element('a', "Extension Source Code", href: "file://#{extension}", class: "index-navbar")
-        #        node.at_css('body').first_element_child.before(source_link)
-        navbar_div.first_element_child << source_link
-      end
       node.at_css('body').first_element_child.before(navbar_div)
       File.open(outfile, 'w') {|f| f.write(Inf7::Doc.to_html(node, :chapter, :html)) }
     end
 
-    
-
-    
-    def get_source(filename)
-      filename = filename.to_s
+    def pretty_print(source_lines)
       i7tohtml = check_executable(:i7tohtml)
-      if i7tohtml
-        lines = File.read(filename).split(/\n/) # TODO
-        split_file = { false => [], true => [], results: {} }
-        doc_yet = false
-        lines.each do |line|
-          doc_yet = true if line.strip.match(/----\s+documentation\s+----/i)
-          pp doc_yet
-          split_file[doc_yet] << line
-        end
-        [ false, true ].each do |bool|
-          Tempfile.open do |f|
-            f.write(split_file[bool].join("\n"))
-            f.close
-            i7tohtml_out, stderr, rc = Open3.capture3(i7tohtml, f.path)
-            split_file[:results][bool] = i7tohtml_out
-          end
-        end
-        return split_file[:results][false], split_file[:results][true] 
-      else
-        return File.read(filename)
-      end
+      return source_lines unless i7tohtml
+      f = Tempfile.new
+      f.write(source_lines.join("\n"))
+      f.close
+      stdout, stderr, rc = Open3.capture3(i7tohtml, f.path)
+      result = stdout.split($/)
+      f.unlink
+      return result
     end
-    #    TODO I am in the middle. get_source must be continued to be rewritten to
-    # put plain documentation on top and then line-numbered source.
-    # must redo templates for this to work
+
+    def get_doc_and_code(source_file)
+      source_file = source_file.to_s
+      lines = pretty_print(File.read(source_file).split($/))
+      results = { doc: [], code: [] }
+      in_doc = false
+      lines.each do |line|
+        in_doc = true if line.strip.match(/----\s+documentation\s+----/i)
+        results[ in_doc ? :doc : :code] << line
+      end
+      results[:code][0] = %Q{<span class="i7gh">#{results[:code][0]}</span>} unless results[:code][0].start_with?('<')
+       results[:doc][0] = results[:code][0].sub(/\s+begins\s+here\s*\./,'').sub('>', ">#{ results[:doc].empty? ? 'No d' : 'D' }ocumentation for ")
+       return results[:doc], results[:code]
+    end
+
+    def write_partial(source_file, output_file, **h)
+      source_file = source_file.to_s
+      return if up_to_date(source_file, output_file)
+      doc, code = get_doc_and_code(source_file)
+      Inf7::Template.write(:source_code_partial, output_file, documentation: doc, code: code, **h)
+    end
+    
+    def write_source(source_file, output_file, **h)
+      # doesn't check up_to_date
+      source_file = source_file.to_s
+      doc, code = get_doc_and_code(source_file)
+      contents = Inf7::Template[:source_code_partial].render(documentation: nil, code: code)
+      Inf7::Template.write(:inform7_source, output_file, contents: contents, **h)
+    end
+
     def make_source_html
       story_html = File.join(@index_root, 'story.html')
-      unless up_to_date(@story, story_html)
-        get_source(@story, :inform7_source, story_html, source: source_code, name: @name, index_root: @index_root, build: @build)
-#        source_code = get_source(@story)
-#        Inf7::Template.write(:inform7_source, story_html, source: source_code, name: @name, index_root: @index_root, build: @build)
-      end
-
+      write_source(@story, story_html, index_root: @index_root, build: @build)
       Inf7::Doc.write_template_files
-
       ext_doc_dir = File.join(@index_root, 'doc')
       FileUtils.mkdir_p(ext_doc_dir)
 
-      extension_locations = Hash.new {|h,k| h[k] = Hash.new {|l,m| l[m] = [] } }
+      extension_locations = Hash.new {|h,k| h[k] = {} }
       [ @extensions_dir, opt(:external), File.join(opt(:internal), 'Extensions') ].each do |ext_dir|
         Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
           author_dir, ext_name = *author_extbase(extension)
-          extension_locations[author_dir.downcase][ext_name.downcase] << extension
+           extension_locations[author_dir.downcase][ext_name.downcase] ||= extension
         end
       end
 
       extension_locations.keys.each do |author_dir|
-        extension_locations[author_dir].each_pair do |ext_base, list|
-          next unless list and !list.empty?
-          applicable = list.first
-          #      Dir[File.join(opt(:external),'Documentation', 'Extensions', '*', '*.html')].each do |extension|
-#        author_dir, ext_base = author_extbase(extension)
-#        applicable = (extension_locations[author_dir.downcase][ext_base.downcase] and !extension_locations[author_dir.downcase][ext_base.downcase].empty?) ? extension_locations[author_dir.downcase][ext_base.downcase].first : nil
-#        puts applicable ? "found #{applicable}" : "nothing found for #{author_dir}/#{ext_base}"
-#        next unless applicable
+        extension_locations[author_dir].each_pair do |ext_base, applicable|
+          next unless applicable
+          dest_dir = File.join(Inf7::Conf.ext, File.dirname(applicable))
+          FileUtils.mkdir_p(dest_dir)
+          contents_dest_file = File.join(dest_dir, "#{ext_base}.html")
+          write_partial(applicable, contents_dest_file, author: author_dir, ext_name: ext_base)
           dest_dir = File.join(@index_root, 'source', author_dir)
           FileUtils.mkdir_p(dest_dir)
           dest_file = File.join(dest_dir, "#{ext_base}.html")
-          unless up_to_date(applicable, dest_file)
-            get_source(applicable, :inform7_source, dest_file, source: source_code, name: ext_base, index_root: @index_root, build: @build)
-#            source_code = get_source(applicable)
-#            Inf7::Template.write(:inform7_source, dest_file, source: source_code, name: ext_base, index_root: @index_root, build: @build)
-          end
-          doc_dest_file = File.join(ext_doc_dir, author_dir.downcase, "#{ext_base.downcase}.html")
-          unless up_to_date(applicable, doc_dest_file)
-            transform_html(applicable, doc_dest_file, dest_file)
-          end
+          Inf7::Template.write(:inform7_source, dest_file, contents: File.read(contents_dest_file), index_root: @index_root, build: @build) unless up_to_date(contents_dest_file, dest_file)
         end
       end
       transform_html(File.join(opt(:external), 'Documentation', 'Extensions.html'), File.join(ext_doc_dir, 'Extensions.html'))
@@ -429,10 +423,8 @@ module Inf7
     def reindex
       Find.find(@dir.join('Index')) do |path|
         next unless path.match(/(Index\/.*\.html)\Z/)
-        transform_html(path, File.join(@index_root,$1))
+        transform_html(path, File.join(@index_root,$1), override: true)
       end
-      index_html = @dir.join('index.html')
-      FileUtils.ln_s(File.join(@index_root,'Index','Welcome.html'), index_html) unless File.exist?(index_html)
     end
 
     def compile(options={})
@@ -511,9 +503,9 @@ module Inf7
         room_thing_count = $1
         %w{ Problems StatusCblorb }.each do |basename|
           filename = @build.join("#{basename}.html").to_s
-          transform_html(filename, @build.join("#{basename.downcase}.html")) if File.exist?(filename)
+          transform_html(filename, @build.join("#{basename.downcase}.html"), override: true) if File.exist?(filename)
         end
-        make_source_html
+        make_source_html unless options[:temp]
         if rc.exitstatus.zero?
           report opt(:verbose) ? stdout : "Compiled #{word_count}-word source. #{room_thing_count}"
           reindex if opt(:index)
