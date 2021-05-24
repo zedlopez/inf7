@@ -1,7 +1,7 @@
 <% in_table = false -%>
 <% lines.each_with_index do |line,i| %><% j = i+1 -%>
 <% if !line_nos and line.match(/\A\s*\*:/) %>
-<% example = CGI.escapeHTML(example_pasties.pop.map {|l| l.sub(/\A\t?/,'')}.join('\n').lstrip) %>
+<% example = CGI.escapeHTML(example_pasties.shift.map {|l| l.sub(/\A\t?/,'')}.join('\n').lstrip) %>
 <% line.sub!(/\*:\s*/, %Q{#{$1}<a href="javascript:copyCode(`#{example}`)"><img border="0" src="#{File.join(Inf7::Conf.doc, 'doc_images/paste.png')}"></a> }) %>
 <% end %>
 <% if line.match(/\A(\t+)/) %><% num = $1.length %><% line = line.sub(/\A\t+/, "&ensp;&ensp;&ensp;&ensp;" * num) %><% end %>
