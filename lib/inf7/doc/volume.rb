@@ -3,15 +3,20 @@ module Inf7
     class Volume
   include Inf7::DocUtil
     @volumes = []
+    @chapter_regexps = Hash.new {|h,k| h[k] = [] }
 
     class << self
       def [](**x)
         Volume.new(x)
       end
       def update!
+        @volumes.find {|v| 'WI' == v.abbrev }.chapters.values.each do |chapter|
+          @chapter_regexps[chapter.num] << %r{chapter\s+#{chapter.num}}i
+          @chapter_regexps[chapter.num] << %r{chapter\s+on\s+"?#{chapter.title}"?}i
+        end
         @volumes.each {|vol| vol.chapters.values.each {|ch| ch.sections.values.each {|s| s.update! } } }
       end
-      attr_accessor :volumes
+      attr_accessor :volumes, :chapter_regexps
     end
     attr_accessor :chapters
     attr_reader :abbrev, :title, :file_prefix, :full_examples

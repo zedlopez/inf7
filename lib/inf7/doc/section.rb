@@ -52,6 +52,17 @@ module Inf7
           next unless p.inner_text.match(/^\n \u00A0\u00A0\s+"/)
           p.inner_html = p.inner_html.sub(/^\n \u00A0\u00A0\s+"/,'"')
         end
+        @div.xpath(%Q{.//p[not(@class = "quoted") and contains(text(), "hapter ")]}).each do |p|
+          wi = Inf7::Doc::Volume.volumes.find {|v| 'WI' == v.abbrev }
+          # go in reverse order to be sure to process longer before shorter, e.g., Chapter 27 before Chapter 2
+          Inf7::Doc::Volume.chapter_regexps.keys.sort.reverse.each do |chapter_num|
+            Inf7::Doc::Volume.chapter_regexps[chapter_num].each do |regexp|
+              p.inner_html = p.inner_html.gsub(regexp) do |match|
+                Inf7::Doc::Doc.create_element('a', match, href: "##{wi.chapters[chapter_num].href}").to_html
+              end
+            end
+          end
+        end
       end
       
       def initialize(html, filename, volume)

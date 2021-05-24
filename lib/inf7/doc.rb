@@ -112,8 +112,6 @@ module Inf7
         Inf7::Template.write(:style, File.join(Inf7::Conf.doc, 'style.css'))
         Inf7::Template.write(:onejs, File.join(Inf7::Conf.doc, 'one.js'))
       end
-
-      
     end
 
     def initialize
