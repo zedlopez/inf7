@@ -4,6 +4,7 @@ require_relative 'template'
 require 'securerandom'
 require 'fileutils'
 require 'tty-which'
+require 'net/http'
 require 'nokogiri'
 require 'pathname'
 require 'optimist'
@@ -35,7 +36,7 @@ module Inf7
                  force: false,
                  progress: false,
                }
-    Fields = (Defaults.keys + Inf7::Executables.keys + [:internal, :external, :release, :resources, :docs, :quiet ]).to_set
+    Fields = (Defaults.keys + Inf7::Executables.keys + [:internal, :external, :release, :resources, :docs, :quiet, :download ]).to_set
     CompileFields = Fields - [ :i6flagstest, :i6flagsrelease, :i7flagstest, :i7flagsrelease ] + [ :i6flags, :i7flags, :index, :force, :verbose ]
     
     SettingsFields = %i{ create_blorb nobble_rng format }.to_set
@@ -399,6 +400,7 @@ module Inf7
     def write_partial(source_file, output_file, **h)
       source_file = source_file.to_s
       return if up_to_date(source_file, output_file)
+      FileUtils.mkdir_p(File.dirname(output_file))
       doc, code, example_pasties = get_doc_and_code(source_file)
       Inf7::Template.write(:source_code_partial, output_file, documentation: doc, code: code, example_pasties: example_pasties, **h)
     end
@@ -430,7 +432,6 @@ module Inf7
         extension_locations[author_dir].each_pair do |ext_base, hash|
           next unless hash
           dest_dir = File.join(Inf7::Conf.ext, File.dirname(hash[:path]))
-          FileUtils.mkdir_p(dest_dir)
           contents_dest_file = File.join(dest_dir, "#{ext_base}.html")
           name = "#{hash[:ext_name]} by #{hash[:author]}"
           write_partial(hash[:path], contents_dest_file, name: name)
