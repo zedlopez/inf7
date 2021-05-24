@@ -11,7 +11,7 @@
 <% in_table = false -%>
 </tbody></table><table class="source-table"><tbody><tr><td<% if line_nos -%> class="line-number"><%= j %><% else -%>><% end -%></td><td <% if line_nos %>id="line<%= j %>"<% end %>><%== line.gsub(/\t/, "&ensp;&ensp;&ensp;&ensp;") %></td></tr><% end -%>
 <% else -%>
-<% if line.match(/\A\s*(&ensp;)*Table of/) %>
+<% if line.match(/\A\s*(&ensp;)*Table\s+(?:of|\d+(?:\.\d+)?)\b/) %>
 <% in_table = true -%>
 <tr><td<% if line_nos -%> class="line-number"><%= j %><% else -%>><% end -%></td><td <% if line_nos %>id="line<%= j %>"<% end %>><%== line %></td></tr></table><table class="source-table"><tbody>
 <% else -%>

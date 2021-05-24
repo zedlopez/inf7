@@ -364,7 +364,6 @@ module Inf7
 
     def get_doc_and_code(source_file)
       source_file = source_file.to_s
-      puts source_file
       raw = File.read(source_file).split($/)
       in_doc = false
       in_example = false
@@ -391,6 +390,7 @@ module Inf7
         results[ in_doc ? :doc : :code] << line
       end
       results[:code][0] = %Q{<span class="i7gh">#{results[:code][0]}</span>} unless results[:code][0].start_with?('<')
+      # We only get "No documentation for..." if ---- Documentation ---- is absent even if the documentation has no lines
       results[:doc][0] = results[:code][0].sub(/\s+begins\s+here\s*\./,'').sub('>', ">#{ results[:doc].empty? ? 'No d' : 'D' }ocumentation for ")
       results[:code].pop until results[:code][-1].match(/\S/)
       return results[:doc], results[:code], example_pasties
@@ -413,7 +413,7 @@ module Inf7
 
     def make_source_html
       story_html = File.join(@index_root, 'story.html')
-      write_source(@story, story_html, index_root: @index_root, build: @build)
+      write_source(@story, story_html, index_root: @index_root, build: @build, name: @name)
       Inf7::Doc.write_template_files
       ext_doc_dir = File.join(@index_root, 'doc')
       FileUtils.mkdir_p(ext_doc_dir)
@@ -422,21 +422,22 @@ module Inf7
       [ @extensions_dir, opt(:external), File.join(opt(:internal), 'Extensions') ].each do |ext_dir|
         Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
           author_dir, ext_name = *author_extbase(extension)
-           extension_locations[author_dir.downcase][ext_name.downcase] ||= extension
+           extension_locations[author_dir.downcase][ext_name.downcase] ||= { author: author_dir, ext_name: ext_name, path: extension }
         end
       end
 
       extension_locations.keys.each do |author_dir|
-        extension_locations[author_dir].each_pair do |ext_base, applicable|
-          next unless applicable
-          dest_dir = File.join(Inf7::Conf.ext, File.dirname(applicable))
+        extension_locations[author_dir].each_pair do |ext_base, hash|
+          next unless hash
+          dest_dir = File.join(Inf7::Conf.ext, File.dirname(hash[:path]))
           FileUtils.mkdir_p(dest_dir)
           contents_dest_file = File.join(dest_dir, "#{ext_base}.html")
-          write_partial(applicable, contents_dest_file, author: author_dir, ext_name: ext_base)
+          name = "#{hash[:ext_name]} by #{hash[:author]}"
+          write_partial(hash[:path], contents_dest_file, name: name)
           dest_dir = File.join(@index_root, 'source', author_dir)
           FileUtils.mkdir_p(dest_dir)
           dest_file = File.join(dest_dir, "#{ext_base}.html")
-          Inf7::Template.write(:inform7_source, dest_file, contents: File.read(contents_dest_file), index_root: @index_root, build: @build) unless up_to_date(contents_dest_file, dest_file)
+          Inf7::Template.write(:inform7_source, dest_file, contents: File.read(contents_dest_file), index_root: @index_root, build: @build, name: name) unless up_to_date(contents_dest_file, dest_file)
         end
       end
       transform_html(File.join(opt(:external), 'Documentation', 'Extensions.html'), File.join(ext_doc_dir, 'Extensions.html'))
