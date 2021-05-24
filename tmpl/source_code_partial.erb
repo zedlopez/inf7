@@ -1,5 +1,5 @@
 <table class="source-table"><tbody>
-<% if documentation %><%== Inf7::Template[:source_code_generic].render(lines: documentation, line_nos: false) %><tr><td>&nbsp;</td></tr><tr><td>&nbsp;</td></tr><% end -%>
+<% if documentation %><%== Inf7::Template[:source_code_generic].render(lines: documentation, line_nos: false, example_pasties: example_pasties) %><tr><td>&nbsp;</td></tr><tr><td>&nbsp;</td></tr><% end -%>
 <%== Inf7::Template[:source_code_generic].render(lines: code, line_nos: true) %>
 </tbody>
 </table>

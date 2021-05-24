@@ -326,13 +326,15 @@ module Inf7
     def transform_html(infile, outfile, override: false)
 
       return if up_to_date(infile, outfile) unless override
+      @copycode ||= Inf7::Template[:copycode].render
+      @navbar ||= Inf7::Template[:index_navbar].render(index_root: @index_root, build: @build.to_s)
       FileUtils.mkdir_p(File.dirname(outfile))
       contents = File.read(infile)
       contents.gsub!(%r{"inform:/([^"]+)"}) {|match| %Q{"#{deform($1)}"} }
       contents.gsub!(%r{'inform:/([^']+)'}) {|match| %Q{'#{deform($1)}'} }
       contents.gsub!(%r{inform:/([^\s>]+)}) {|match| deform($1) }
       contents.gsub!(/source:story\.ni/, "file://#{File.join(@index_root, 'story.html')}")
-      contents.gsub!(/function pasteCode/,"#{Inf7::Template[:copycode].render} function pasteCode");
+      contents.gsub!(/function pasteCode/,"#{@copycode} function pasteCode");
       contents.gsub!(/"javascript:pasteCode\('([^']+)'\)"/) do |m|
         %Q{"javascript:copyCode(`#{Inf7::Doc.fix_javascript($1)}`)"}
       end
@@ -343,7 +345,7 @@ module Inf7
       end
       node = Nokogiri::HTML(contents)
       navbar_div = Inf7::Doc::Doc.create_element('div')
-      navbar_div.inner_html = Inf7::Template[:index_navbar].render(index_root: @index_root, build: @build.to_s)
+      navbar_div.inner_html = @navbar
       node.at_css('body').first_element_child.before(navbar_div)
       File.open(outfile, 'w') {|f| f.write(Inf7::Doc.to_html(node, :chapter, :html)) }
     end
@@ -362,7 +364,26 @@ module Inf7
 
     def get_doc_and_code(source_file)
       source_file = source_file.to_s
-      lines = pretty_print(File.read(source_file).split($/))
+      puts source_file
+      raw = File.read(source_file).split($/)
+      in_doc = false
+      in_example = false
+      example_pasties = []
+      raw.each do |line|
+        in_doc = true if line.strip.match(/----\s+documentation\s+----/i)
+        next unless in_doc
+        if line.match(/\A\s*\*:(.*)\Z/)
+          in_example = true
+          example_pasties << [$1]
+        elsif in_example
+          if line.match(/\S/) and !line.start_with?("\t")
+            in_example = false
+          else
+            example_pasties.last << line
+          end
+        end
+      end
+      lines = pretty_print(raw)
       results = { doc: [], code: [] }
       in_doc = false
       lines.each do |line|
@@ -370,15 +391,16 @@ module Inf7
         results[ in_doc ? :doc : :code] << line
       end
       results[:code][0] = %Q{<span class="i7gh">#{results[:code][0]}</span>} unless results[:code][0].start_with?('<')
-       results[:doc][0] = results[:code][0].sub(/\s+begins\s+here\s*\./,'').sub('>', ">#{ results[:doc].empty? ? 'No d' : 'D' }ocumentation for ")
-       return results[:doc], results[:code]
+      results[:doc][0] = results[:code][0].sub(/\s+begins\s+here\s*\./,'').sub('>', ">#{ results[:doc].empty? ? 'No d' : 'D' }ocumentation for ")
+      results[:code].pop until results[:code][-1].match(/\S/)
+      return results[:doc], results[:code], example_pasties
     end
 
     def write_partial(source_file, output_file, **h)
       source_file = source_file.to_s
       return if up_to_date(source_file, output_file)
-      doc, code = get_doc_and_code(source_file)
-      Inf7::Template.write(:source_code_partial, output_file, documentation: doc, code: code, **h)
+      doc, code, example_pasties = get_doc_and_code(source_file)
+      Inf7::Template.write(:source_code_partial, output_file, documentation: doc, code: code, example_pasties: example_pasties, **h)
     end
     
     def write_source(source_file, output_file, **h)
