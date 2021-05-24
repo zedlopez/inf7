@@ -10,10 +10,13 @@ module Inf7
         Volume.new(x)
       end
       def update!
-        @volumes.find {|v| 'WI' == v.abbrev }.chapters.values.each do |chapter|
-          @chapter_regexps[chapter.num] << %r{chapter\s+#{chapter.num}}i
+        wi = @volumes.find {|v| 'WI' == v.abbrev }
+        wi.chapters.values.each do |chapter|
+          @chapter_regexps[chapter.num] << %r{chapter\s+#{chapter.num}[\.\s,]}i
           @chapter_regexps[chapter.num] << %r{chapter\s+on\s+"?#{chapter.title}"?}i
+          @chapter_regexps[chapter.num] << %r{"?#{chapter.title}"? chapter}i
         end
+        @chapter_regexps[wi.chapters.keys.max] << %r{final chapter of the documentation}
         @volumes.each {|vol| vol.chapters.values.each {|ch| ch.sections.values.each {|s| s.update! } } }
       end
       attr_accessor :volumes, :chapter_regexps

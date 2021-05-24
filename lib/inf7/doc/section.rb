@@ -52,13 +52,26 @@ module Inf7
           next unless p.inner_text.match(/^\n \u00A0\u00A0\s+"/)
           p.inner_html = p.inner_html.sub(/^\n \u00A0\u00A0\s+"/,'"')
         end
-        @div.xpath(%Q{.//p[not(@class = "quoted") and contains(text(), "hapter ")]}).each do |p|
+        @div.xpath(%Q{.//p[not(@class = "quoted") and contains(text(), "hapter")]}).each do |p|
           wi = Inf7::Doc::Volume.volumes.find {|v| 'WI' == v.abbrev }
           # go in reverse order to be sure to process longer before shorter, e.g., Chapter 27 before Chapter 2
           Inf7::Doc::Volume.chapter_regexps.keys.sort.reverse.each do |chapter_num|
+            regexps = Inf7::Doc::Volume.chapter_regexps[chapter_num].dup
             Inf7::Doc::Volume.chapter_regexps[chapter_num].each do |regexp|
               p.inner_html = p.inner_html.gsub(regexp) do |match|
                 Inf7::Doc::Doc.create_element('a', match, href: "##{wi.chapters[chapter_num].href}").to_html
+              end
+              # RB has literally no instances of 'next|previous chapter'
+              # or this would make bad links for them
+              if @chapter.num > 1
+                prev_link = Inf7::Doc::Doc.create_element('a', 'previous chapter', href: "##{wi.chapters[@chapter.num-1].href}").to_html
+                p.inner_html = p.inner_html.gsub(/\bprevious chapter\b/i, prev_link)
+              end
+              if wi.chapters.key?(@chapter.num+1)
+                next_link = Inf7::Doc::Doc.create_element('a', 'next chapter', href: "##{wi.chapters[@chapter.num+1].href}").to_html
+                p.inner_html = p.inner_html.gsub(/\b((?:this\s+)?next chapter)\b/i) do |match|
+                  match.downcase.start_with?('this') ? match : next_link
+                end
               end
             end
           end
