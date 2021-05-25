@@ -92,45 +92,33 @@ inf7 is written in Ruby, so your system will need at least that. See [INSTALL.md
 
 ## Getting started
 
-You will need a working Inform 7 installation (more specifically, you'll need ni, inform6, and cBlorb executables and the Internal, Resources, and Documentation directories mentioned below).
+For Linux x86_64 users, setting up can be as simple as:
 
-Before you can do anything else, you have to run setup. This step's a little fiddly and annoying, but this annoyance is front-loaded: all the things you set here you won't have to worry about again.
+```
+$ inf7 setup --author "Zed Lopez" --download
+```
 
-The following are required:
+Author (the default for new stories and extensions) is not strictly required, but you'll probably want to specify it or you'll get the default of "Imp".
 
-- internal -- Inform 7's Internal Directory (parent dir of "Extensions/Graham Nelson/Standard Rules.i7x" at al)
-- resources -- parent dir of doc_images, map_icons, scene_icons, bg_images, outcome_images
-- docs -- contains Rdoc1.html through Rdoc103.html, doc1.html through doc459.html, and general_index.html
-- external -- Inform 7's external directory (parent dir of the Extensions directory accessible to all your projects)
+You don't even need an existing Inform 7 installation; it'll download things for you. 
 
-external and internal will be familiar to any command-line users of ni: they're the same values you pass to it. Places you'd expect resources:
+If you're on one of armv6lhf, i386, or ppc, you can specify that with '--arch'.
 
-- linux CLI package: /usr/local/share/inform7/Documentation (not named Resources)
-- gnome package: /usr/share/gnome-inform7/Resources
-- Mac OS: Inform/Inform.app/Contents/Resources 
-- Windows: "Program Files\Inform 7\Documentation"
+```
+$ inf7 setup --author "Zed Lopez" --arch armv6lhf --download
+```
 
-Places you'd expect docs:
+Non-Linux users may use '--download' and it'll install an Internal directory appropriately, but you're on your own to ensure your system has ni, inform6, and cBlorb binaries. (You can specify the locations of ni, inform6, and cBlorb explicitly, but if they're in your PATH you don't have to (see Executables below). 
 
-- gnome package: /usr/share/gnome-inform7/Documentation
-- Mac OS: Inform/Inform.app/Contents/Resources/English.lproj
-- Windows: "Program Files\Inform 7\Documentation"
+If you don't want your external dir to default to "$HOME/Inform" specify it with '--external'. (Windows users will want to do this.)
 
-If you only have the Linux CLI package, you don't have the docs directory. You can find it in this [LZMA compressed archive of the Inform 7 data](https://github.com/ptomato/gnome-inform7/raw/master/data/Inform_6M62_data.tar.lz). You may have to rename it to end .xz instead of .lz for tar to be able to extract its contents. This archive has top-level Documentation and Resources directories appropriate for --docs and --resources. (The Linux CLI package has the equivalent documentation contents but with more readable filenames; the Project Index uses the less readable filenames internally.)
+```
+$ inf7 setup --author "Zed Lopez" --download --external /home/zed/projects/inform
+```
 
-Not strictly required, but you'll probably want to specify the author tag or you'll get the default of "Imp".
-
-author -- default author for new stories and extensions. 
-
-You may specify the locations of ni, inform6, and cBlorb here, but if they're in your PATH you don't have to (see Executables below). 
-
-The default for cblorbflags is '-unix'. Mac users will want to set it to '-osx' and Windows users to '-windows'.
+The default for '--cblorbflags' is '-unix'. Mac users will want to set it to '-osx' and Windows users to '-windows'.
 
 There are many other options; we'll get to them later.
-
-```
-$ inf7 setup --internal /usr/local/share/inform7/Internal --external ~/external --resources /usr/share/gnome-inform7/Resources --docs /usr/share/gnome-inform7/Documentation --author "Zed Lopez"
-```
 
 ## Files
 
@@ -450,6 +438,36 @@ Besides all the files Inform 7 usually leaves behind, inf7 leaves more in its tr
 ```
 $ inf7 clean a_walk_in_the_park
 ```
+
+## Setup from an existing installation
+
+If you already have a working Inform 7 IDE installation, you may not need to setup with '--download' as described above. You can specify things manually (which is a little fiddly and annoying, but this annoyance is front-loaded: all the things you set here you won't have to worry about again).
+
+```
+$ inf7 setup --internal /usr/local/share/inform7/Internal --external ~/external --resources /usr/share/gnome-inform7/Resources --docs /usr/share/gnome-inform7/Documentation --author "Zed Lopez"
+```
+
+The following are required:
+
+- internal -- Inform 7's Internal Directory (parent dir of "Extensions/Graham Nelson/Standard Rules.i7x" at al)
+- resources -- parent dir of doc_images, map_icons, scene_icons, bg_images, outcome_images
+- docs -- contains Rdoc1.html through Rdoc103.html, doc1.html through doc459.html, and general_index.html
+- external -- Inform 7's external directory (parent dir of the Extensions directory accessible to all your projects)
+
+external and internal will be familiar to any command-line users of ni: they're the same values you pass to it. Places you'd expect resources:
+
+- linux CLI package: /usr/local/share/inform7/Documentation (not named Resources)
+- gnome package: /usr/share/gnome-inform7/Resources
+- Mac OS: Inform/Inform.app/Contents/Resources 
+- Windows: "Program Files\Inform 7\Documentation"
+
+Places you'd expect docs:
+
+- gnome package: /usr/share/gnome-inform7/Documentation
+- Mac OS: Inform/Inform.app/Contents/Resources/English.lproj
+- Windows: "Program Files\Inform 7\Documentation"
+
+If you only have the Linux CLI package, you don't have the docs directory (the Linux CLI package has the equivalent documentation contents but with more readable filenames; the Project Index uses the less readable filenames internally). Just use --download.
 
 ## Cautions
 

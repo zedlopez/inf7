@@ -64,13 +64,15 @@ class Inf
       opt :top, "Create another dir over .inform and .materials", short: :none
       opt :git, "Support git", short: :none
       opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
-      opt :i7tohtml, "Location of i7tohtml.py", type: :string
-      opt :download, "Download resources", default: false
+      opt :i7tohtml, "Location of i7tohtml.py", type: :string, short: :none
+      opt :download, "Download resources", default: false, short: :none
+      opt :arch, "Architecture", short: :none, default: "x86_64"
+      opt :cheap_glulx, "glulx terp that uses only stdin and stdout", short: none
+      opt :cheap_zcode, "zcode terp that uses only stdin and stdout", short: none
     end
     @subopts.reject! {|k,v| v.nil? or !Inf7::Project::Fields.member?(k) }
     Optimist::die "You must specify either --download or all of --internal, --resources, --docs" unless @subopts[:download] or %i{ internal resources docs }.all? {|x| @subopts[x] }
     Optimist::die :internal, "must be Inform's internal directory" if @subopts[:internal] and !File.exist?(File.join(@subopts[:internal], 'Extensions', 'Graham Nelson', 'Standard Rules.i7x'))
-    Optimist::die :external, "must be a writable directory" if @subopts[:external] and !(Dir.exist?(@subopts[:external]) and File.writable?(@subopts[:external]))
     Inf7::Conf.create(@subopts)
   end
 
@@ -206,7 +208,7 @@ class Inf
     @subopts = Optimist::options do
       banner "Options for doc"
       opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
-      opt :active, "Update js and css only", default: false
+      opt :active, "Update js and css only", default: false, short: :none
     end
     Inf7::Doc.create(@subopts)
   end

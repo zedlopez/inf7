@@ -35,6 +35,7 @@ module Inf7
                  index: true,
                  force: false,
                  progress: false,
+                 arch: 'x86_64'
                }
     Fields = (Defaults.keys + Inf7::Executables.keys + [:internal, :external, :release, :resources, :docs, :quiet, :download ]).to_set
     CompileFields = Fields - [ :i6flagstest, :i6flagsrelease, :i7flagstest, :i7flagsrelease ] + [ :i6flags, :i7flags, :index, :force, :verbose ]
@@ -505,7 +506,7 @@ module Inf7
     end
 
     def check_executable(name)
-      opt(name) || TTY::Which.which(Inf7::Executables[name])
+      opt(name) || (TTY::Which.exist?(Inf7::Executables[name]) ? TTY::Which.which(Inf7::Executables[name]) : nil)
     end
 
     def compile_ni(options)
@@ -519,18 +520,19 @@ module Inf7
         arg_list += [ '--internal', opt(:internal), '--external', opt(:external), '--project', dir.to_s ]
         report ([ni]+arg_list).join(' ')
         FileUtils.mkdir_p(opt(:external))
+        puts ([ 'ni' ] + arg_list).join(' ')
         stdout, stderr, rc = Open3.capture3(ni, *arg_list)
-        out_lines = stdout.split($/)
-        out_lines[1].match(/source text, which is (\d+) words long\./)
-        word_count = $1
-        out_lines[-2].match(/(There were.*things\.)/)
-        room_thing_count = $1
         %w{ Problems StatusCblorb }.each do |basename|
           filename = @build.join("#{basename}.html").to_s
           transform_html(filename, @build.join("#{basename.downcase}.html"), override: true) if File.exist?(filename)
         end
         make_source_html unless options[:temp]
         if rc.exitstatus.zero?
+        out_lines = stdout.split($/)
+        out_lines[1].match(/source text, which is (\d+) words long\./)
+        word_count = $1
+        out_lines[-2].match(/(There were.*things\.)/)
+        room_thing_count = $1
           report opt(:verbose) ? stdout : "Compiled #{word_count}-word source. #{room_thing_count}"
           reindex if opt(:index)
         else
