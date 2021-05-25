@@ -37,7 +37,7 @@ module Inf7
                  progress: false,
                  arch: 'x86_64'
                }
-    Fields = (Defaults.keys + Inf7::Executables.keys + [:internal, :external, :release, :resources, :docs, :quiet, :download ]).to_set
+    Fields = (Defaults.keys + [:ni, :inform6, :cblorb, :i7tohtml, :internal, :external, :release, :resources, :docs, :quiet, :download ]).to_set
     CompileFields = Fields - [ :i6flagstest, :i6flagsrelease, :i7flagstest, :i7flagsrelease ] + [ :i6flags, :i7flags, :index, :force, :verbose ]
     
     SettingsFields = %i{ create_blorb nobble_rng format }.to_set
@@ -505,8 +505,12 @@ module Inf7
       location
     end
 
-    def check_executable(name)
-      opt(name) || (TTY::Which.exist?(Inf7::Executables[name]) ? TTY::Which.which(Inf7::Executables[name]) : nil)
+    def executable_name(sym)
+      (:cblorb == sym.to_sym) ? 'cBlorb' : sym.to_s
+    end
+    
+    def check_executable(name) 
+      opt(name) || (TTY::Which.exist?(executable_name(name)) ? TTY::Which.which(executable_name(name)) : nil)
     end
 
     def compile_ni(options)

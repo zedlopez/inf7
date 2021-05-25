@@ -1,7 +1,6 @@
 module Inf7
   class Error < StandardError; end
   Appname = 'inf7'
-  Executables = Hash.new {|h,k| h[k] = (:cblorb == k) ? 'cBlorb' : k.to_s }
   Downloads = { data: { url: 'https://github.com/ptomato/gnome-inform7/raw/master/data/Inform_6M62_data.tar.lz',
                   dest: 'i7_6m62_data.tar.xz', },
                 cli: { url: 'http://inform7.com/apps/6M62/I7_6M62_Linux_all.tar.gz',
