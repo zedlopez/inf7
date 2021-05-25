@@ -111,7 +111,8 @@ module Inf7
           FileUtils.cp(Inf7::Template.path(template), dest) unless File.exist?(dest)
         end
         FileUtils.mkdir_p(File.join(@dir, 'extensions'))
-        Inf7::Doc.create(conf)
+        Inf7::Doc.create(@conf)
+        Inf7::Project.census(@conf)
       end
     end
     

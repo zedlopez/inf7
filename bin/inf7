@@ -15,7 +15,8 @@ class Inf
                "doc" => "Regenerate documentation",
                "epub" => "Create epub",
                "test" => "Test an extension",
-               "clean" => "Clean a project's build output"
+               "clean" => "Clean a project's build output",
+               "census" => "Take extension census"
              }
   
   attr_reader :main_opts, :command, :subopts
@@ -245,7 +246,18 @@ class Inf
     end
     Inf7::Project.smoketest(@subopts.reject {|k,v| v.nil?})
   end
-  
+
+  def opt_census
+    @subopts = Optimist::options do
+      banner "Extension census what's your mention"
+      opt :internal, "Inform internal directory", type: :string, short: :none
+      opt :external, "Inform external directory", type: :string, short: :none
+      opt :ni, "Location of ni", type: :string, short: :none
+      opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
+    end
+    Inf7::Project.census(@subopts.reject {|k,v| v.nil?})
+  end
 end
+
 
 Inf.new

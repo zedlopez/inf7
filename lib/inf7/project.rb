@@ -59,6 +59,19 @@ module Inf7
       end
     end
 
+    def self.census(options)
+      Dir.mktmpdir do |tmpdir|
+        project = Inf7::Project.new(tmpdir, {}.merge(options).merge( { top: true, allow_prior_existence: true, index: false }))
+        project.census
+      end
+      # ni = options[:ni] || (TTY::Which.exist?('ni') ? TTY::Which.which('ni') : nil)
+      # return unless ni
+      # arg_list = [ '--noprogress', '--internal', options[:internal], '--external', options[:external], '--census' ]
+      # 
+      # puts ([ 'ni' ] + arg_list).join(' ')
+      # stdout, stderr, rc = Open3.capture3(ni, *arg_list)
+    end
+    
     def self.smoketest(options)
       Optimist::die "Can't find #{options[:ext]}" unless File.exist?(options[:ext])
       Dir.mktmpdir do |tmpdir|
@@ -117,6 +130,22 @@ module Inf7
       FileUtils.mkdir_p(File.join(dest_dir, author_dir))
       FileUtils.cp(ext, destination)
       return File.basename(extension_filename, '.i7x'), author_dir
+    end
+
+
+    def census
+      ni = check_executable(:ni)
+      if ni
+        arg_list = [ '--noprogress', '--internal', opt(:internal), '--external', opt(:external), '--census' ]
+        report ([ni]+arg_list).join(' ')
+        stdout, stderr, rc = Open3.capture3(ni, *arg_list)
+        if rc.exitstatus.zero?
+          report stdout unless opt(:quiet)
+          make_source_html(nothing_personal: true)
+        else
+          STDERR.puts(stderr)
+        end
+      end
     end
     
     def set(conf)
@@ -419,15 +448,19 @@ module Inf7
       Inf7::Template.write(:inform7_source, output_file, contents: contents, **h)
     end
 
-    def make_source_html
-      story_html = File.join(@index_root, 'story.html')
-      write_source(@story, story_html, index_root: @index_root, build: @build, name: @name)
-      Inf7::Doc.write_template_files
-      ext_doc_dir = File.join(@index_root, 'doc')
-      FileUtils.mkdir_p(ext_doc_dir)
-
+    def make_source_html(nothing_personal: false)
       extension_locations = Hash.new {|h,k| h[k] = {} }
-      [ @extensions_dir, opt(:external), File.join(opt(:internal), 'Extensions') ].each do |ext_dir|
+      extension_dir_list = [ opt(:external), File.join(opt(:internal), 'Extensions') ]
+      Inf7::Doc.write_template_files
+      unless nothing_personal 
+        story_html = File.join(@index_root, 'story.html')
+        write_source(@story, story_html, index_root: @index_root, build: @build, name: @name)
+        ext_doc_dir = File.join(@index_root, 'doc')
+        FileUtils.mkdir_p(ext_doc_dir)
+        extension_dir_list.unshift(@extensions_dir) 
+      end
+
+      extension_dir_list.each do |ext_dir|
         Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
           author_dir, ext_name = *author_extbase(extension)
            extension_locations[author_dir.downcase][ext_name.downcase] ||= { author: author_dir, ext_name: ext_name, path: extension }
@@ -441,13 +474,15 @@ module Inf7
           contents_dest_file = File.join(dest_dir, "#{ext_base}.html")
           name = "#{hash[:ext_name]} by #{hash[:author]}"
           write_partial(hash[:path], contents_dest_file, name: name)
-          dest_dir = File.join(@index_root, 'source', author_dir)
-          FileUtils.mkdir_p(dest_dir)
-          dest_file = File.join(dest_dir, "#{ext_base}.html")
-          Inf7::Template.write(:inform7_source, dest_file, contents: File.read(contents_dest_file), index_root: @index_root, build: @build, name: name) unless up_to_date(contents_dest_file, dest_file)
+          unless nothing_personal
+            dest_dir = File.join(@index_root, 'source', author_dir)
+            FileUtils.mkdir_p(dest_dir)
+            dest_file = File.join(dest_dir, "#{ext_base}.html")
+            Inf7::Template.write(:inform7_source, dest_file, contents: File.read(contents_dest_file), index_root: @index_root, build: @build, name: name) unless up_to_date(contents_dest_file, dest_file)
+          end
         end
       end
-      transform_html(File.join(opt(:external), 'Documentation', 'Extensions.html'), File.join(ext_doc_dir, 'Extensions.html'))
+      transform_html(File.join(opt(:external), 'Documentation', 'Extensions.html'), File.join(ext_doc_dir, 'Extensions.html')) unless nothing_personal
     end
     
     def reindex

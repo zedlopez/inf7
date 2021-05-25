@@ -228,7 +228,7 @@ Other relevant parameters:
 
 and which is used depends on whether you specify --release.
 
-There's an important difference between how i6flags and i7flags work. i7flags is additive, but if you specify i6flags you must specify all the i6flags you want to apply to the run: what you specify _replaces_ the defaults.
+There's an important difference between how i6flags and i7flags work. i7flags is additive, but if you specify i6flags you must specify all the i6flags you want to apply to the run: what you specify _replaces_ the defaults. Note that you really don't want to use ~D in i6flagstest and you really, really don't want to use -D or -S in i6flagsrelease, but inf7 won't stop you if that's what you ask for.
 
 ### Compiling without a project
 
@@ -240,7 +240,7 @@ $ inf7 compile walk_in_the_park.ni # if successful, there will be a walk_in_the_
 
 ### Executables
 
-The compile subcommand will need to have access to ni, inform6, and cBlorb. If these exist in your PATH, you don't have to specify them. Otherwise, you'll want to specify them when you run setup. (If you really wanted, they could be configured on a per project basis or overridden with command-line options when you compile.)
+The compile subcommand will need to have access to ni, inform6, and cBlorb. If these exist in your PATH, you don't have to specify them. Otherwise, you'll want to specify them when you run setup. (If you really wanted, they could be configured on a per project basis or overridden with command-line options when you compile. This could be useful to developers of the inform6 compiler and probably not anyone else.)
 
 ## Set and Settings
 
