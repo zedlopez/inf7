@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 
 """
+i7tohtml: Hack of Andrew Plotkin's i7tohtml.py for inf7
+
+https://github.com/erkyrath/glk-dev/blob/master/i7tohtml.py
+
+Per the original, this script is in the public domain.
+
+Original description follows:
+
+--
 i7tohtml.py: Simple syntax-coloring wrapper for Inform 7
 Written by Andrew Plotkin. This script is in the public domain.
 
@@ -22,7 +31,6 @@ get Unicode wrong.)
 import sys
 import re
 import codecs
-import optparse
 
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name
@@ -30,23 +38,9 @@ from pygments.formatters import HtmlFormatter
 from pygments.token import Token, Comment, String
 from pygments.filter import Filter
 
-popt = optparse.OptionParser(usage='i7tohtml.py [options] story.ni > out.html')
-
-popt.add_option('-T', '--title',
-                action='store', dest='title', default='Game-Title',
-                help='Title of game (default: "Game-Title")')
-popt.add_option('--css',
-                action='store', dest='css',
-                help='CSS URL to include')
-
-(opts, args) = popt.parse_args()
-
-if not args:
-    code = sys.stdin.read()
-else:
-    fl = open(args[0])
-    code = fl.read()
-    fl.close()
+fl = open(sys.argv[1])
+code = fl.read()
+fl.close()
 
 class CleanI6Filter(Filter):
     """Clean up the fruit-salad of I6 syntax coloring that Pygments normally
@@ -95,7 +89,6 @@ def spaces_replace(match):
     return ('&nbsp;' * (num-1)) + ' '
 
 for i, ln in enumerate(result.split('\n')):
-    
     ln = ln.rstrip()
 
     # Convert any sequence of two or more spaces to a string of NBSP
