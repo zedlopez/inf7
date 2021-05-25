@@ -191,7 +191,12 @@ module Inf7
         create_story
         ext_dir = File.join(Inf7::Conf.dir, 'extensions')
         if Dir.exist?(ext_dir)
-          Dir.entries(ext_dir).reject {|x| x.start_with?('.')}.each {|author_dir| FileUtils.cp_r(File.join(ext_dir,author_dir), @extensions_dir)  }
+          Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
+            author_dir, ext_name = author_extbase(extension)
+            dest_dir = File.join(@extensions_dir, author_dir)
+            FileUtils.mkdir_p(dest_dir)
+            FileUtils.cp(extension, dest_dir)
+          end
         end
         if opt(:git)
           Dir.chdir(@top.to_s) do

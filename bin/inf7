@@ -67,8 +67,8 @@ class Inf
       opt :i7tohtml, "Location of i7tohtml.py", type: :string, short: :none
       opt :download, "Download resources", default: false, short: :none
       opt :arch, "Architecture", short: :none, default: "x86_64"
-      opt :cheap_glulx, "glulx terp that uses only stdin and stdout", short: none
-      opt :cheap_zcode, "zcode terp that uses only stdin and stdout", short: none
+      opt :cheap_glulx, "glulx terp that uses only stdin and stdout", short: :none
+      opt :cheap_zcode, "zcode terp that uses only stdin and stdout", short: :none
     end
     @subopts.reject! {|k,v| v.nil? or !Inf7::Project::Fields.member?(k) }
     Optimist::die "You must specify either --download or all of --internal, --resources, --docs" unless @subopts[:download] or %i{ internal resources docs }.all? {|x| @subopts[x] }
@@ -99,7 +99,7 @@ class Inf
       opt :verbose, "Verbose compilation output", default: false, short: '-v'
     end
     @subopts.reject! {|k,v| v.nil? or !Inf7::Project::CompileFields.member?(k) }
-    if ARGV.first.end_with?('.ni')
+    if !ARGV.empty? and ARGV.first.end_with?('.ni')
       Inf7::Project.bare_compile(ARGV.first, @subopts)
     else
       Inf7::Project[ARGV,@subopts].compile
