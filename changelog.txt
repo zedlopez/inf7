@@ -1,4 +1,5 @@
-0.1.6 Make links of docs' internal references to things of the form "previous/next chapter", "Chapter 3", "Activities Chapter", "Chapter on Actions"
+0.1.6 add --download option to setup
+      Make links of docs' internal references to things of the form "previous/next chapter", "Chapter 3", "Activities Chapter", "Chapter on Actions"
       Inserting appropriate copyCode links for extension examples and, at top, for "Include <extension>"
       title tags for html pages of extensions and story
 0.1.5 Don't transform ni's own extension pages; create our own with i7tohtml

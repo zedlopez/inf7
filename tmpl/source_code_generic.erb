@@ -5,6 +5,7 @@
 <% line.sub!(/\*:\s*/, %Q{#{$1}<a href="javascript:copyCode(`#{example}`)"><img border="0" src="#{File.join(Inf7::Conf.doc, 'doc_images/paste.png')}"></a> }) %>
 <% end %>
 <% if line.match(/\A(\t+)/) %><% num = $1.length %><% line = line.sub(/\A\t+/, "&ensp;&ensp;&ensp;&ensp;" * num) %><% end %>
+<% line = line.gsub(/\t+/,"\t") %>
 <% if in_table -%>
 <% if line.strip.match(/\S/) and !line.match(/\A\s*(&ensp;)*with\s+\d+\s+blank\s+row/) -%>
 <tr><td<% if line_nos -%> class="line-number"><%= j %><%else -%>><% end -%></td><td <% if line_nos %>id="line<%= j %>"<% end %>><%== line.gsub(/\t/, "</td><td>") %></td></tr><% else -%>
