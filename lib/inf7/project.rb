@@ -37,7 +37,7 @@ module Inf7
                  progress: false,
                  arch: 'x86_64'
                }
-    Fields = (Defaults.keys + [:ni, :inform6, :cblorb, :i7tohtml, :internal, :external, :release, :resources, :docs, :quiet, :download ]).to_set
+    Fields = (Defaults.keys + [:ni, :inform6, :cblorb, :i7tohtml, :internal, :external, :release, :resources, :docs, :quiet, :download, :zterp, :gterp, :cheap_glulx, :cheap_zcode, :browser ]).to_set
     CompileFields = Fields - [ :i6flagstest, :i6flagsrelease, :i7flagstest, :i7flagsrelease ] + [ :i6flags, :i7flags, :index, :force, :verbose ]
     
     SettingsFields = %i{ create_blorb nobble_rng format }.to_set
@@ -61,15 +61,9 @@ module Inf7
 
     def self.census(options)
       Dir.mktmpdir do |tmpdir|
-        project = Inf7::Project.new(tmpdir, {}.merge(options).merge( { top: true, allow_prior_existence: true, index: false }))
+        project = Inf7::Project.new(tmpdir, options.merge( { top: true, allow_prior_existence: true }))
         project.census
       end
-      # ni = options[:ni] || (TTY::Which.exist?('ni') ? TTY::Which.which('ni') : nil)
-      # return unless ni
-      # arg_list = [ '--noprogress', '--internal', options[:internal], '--external', options[:external], '--census' ]
-      # 
-      # puts ([ 'ni' ] + arg_list).join(' ')
-      # stdout, stderr, rc = Open3.capture3(ni, *arg_list)
     end
     
     def self.smoketest(options)
@@ -136,9 +130,9 @@ module Inf7
     def census
       ni = check_executable(:ni)
       if ni
-        arg_list = [ '--noprogress', '--internal', opt(:internal), '--external', opt(:external), '--census' ]
-        report ([ni]+arg_list).join(' ')
-        stdout, stderr, rc = Open3.capture3(ni, *arg_list)
+        args = [ '--noprogress', '--internal', opt(:internal), '--external', opt(:external), '--census' ]
+        report ([ni]+args).join(' ')
+        stdout, stderr, rc = Open3.capture3(ni, *args)
         if rc.exitstatus.zero?
           report stdout unless opt(:quiet)
           make_source_html(nothing_personal: true)
@@ -493,7 +487,15 @@ module Inf7
     end
 
     def compile(options={})
-      compile_ni(options) && compile_inform6(options) && compile_cblorb(options)
+      if compile_ni(options) && compile_inform6(options) && compile_cblorb(options)
+        if opt(:zterp) and ('zcode' == opt(:format))
+          system(opt(:zterp), opt(:create_cblorb) ? blorb : output)
+        elsif opt(:gterp) and ('glulx' == opt(:format))
+          system(opt(:gterp), opt(:create_cblorb) ? blorb : output)
+        end
+      elsif opt(:browser) and File.exist?(@build.join('problems.html'))
+        system(opt(:browser), @build.join('problems.html').to_s)
+      end
     end
 
     def fake
@@ -511,7 +513,6 @@ module Inf7
         Dir[File.join(dirty, '*')].each {|removable| FileUtils.rm_rf(removable) }
       end
     end
-
     
     private
 
@@ -571,16 +572,16 @@ module Inf7
           transform_html(filename, @build.join("#{basename.downcase}.html"), override: true) if File.exist?(filename)
         end
         make_source_html unless options[:temp]
-        if rc.exitstatus.zero?
-        out_lines = stdout.split($/)
-        out_lines[1].match(/source text, which is (\d+) words long\./)
-        word_count = $1
-        out_lines[-2].match(/(There were.*things\.)/)
-        room_thing_count = $1
+        if rc.exitstatus and rc.exitstatus.zero?
+          out_lines = stdout.split($/)
+          out_lines[1].match(/source text, which is (\d+) words long\./)
+          word_count = $1
+          out_lines[-2].match(/(There were.*things\.)/)
+          room_thing_count = $1
           report opt(:verbose) ? stdout : "Compiled #{word_count}-word source. #{room_thing_count}"
           reindex if opt(:index)
         else
-          STDERR.puts "Attempted to compile #{word_count}-word source."
+          STDERR.puts "Failed"
           STDERR.write(stderr)
           return false
         end

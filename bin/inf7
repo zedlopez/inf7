@@ -65,11 +65,13 @@ class Inf
       opt :top, "Create another dir over .inform and .materials", short: :none
       opt :git, "Support git", short: :none
       opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
-      opt :i7tohtml, "Location of i7tohtml.py", type: :string, short: :none
       opt :download, "Download resources", default: false, short: :none
       opt :arch, "Architecture", short: :none, default: "x86_64"
+      opt :i7tohtml, "Location of i7tohtml.py", type: :string, short: :none
       opt :cheap_glulx, "glulx terp that uses only stdin and stdout", short: :none
       opt :cheap_zcode, "zcode terp that uses only stdin and stdout", short: :none
+      opt :zterp, "zcode terp to launch on successful compile", short: :none
+      opt :gterp, "glulx terp to launch on successful compile", short: :none
     end
     @subopts.reject! {|k,v| v.nil? or !Inf7::Project::Fields.member?(k) }
     Optimist::die "You must specify either --download or all of --internal, --resources, --docs" unless @subopts[:download] or %i{ internal resources docs }.all? {|x| @subopts[x] }
@@ -98,6 +100,12 @@ class Inf
       opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
       opt :progress, "Verbose progress output", default: false
       opt :verbose, "Verbose compilation output", default: false, short: '-v'
+      opt :zterp, "zcode terp to launch on successful compile", type: :string, short: :none
+      opt :gterp, "glulx terp to launch on successful compile", type: :string, short: :none
+      opt :i7tohtml, "Location of i7tohtml.py", type: :string, short: :none
+      opt :cheap_glulx, "glulx terp that uses only stdin and stdout", type: :string, short: :none
+      opt :cheap_zcode, "zcode terp that uses only stdin and stdout", type: :string, short: :none
+      opt :browser, "browser to launch on unsuccessful compile", type: :string, short: :none
     end
     @subopts.reject! {|k,v| v.nil? or !Inf7::Project::CompileFields.member?(k) }
     if !ARGV.empty? and ARGV.first.end_with?('.ni')
@@ -127,6 +135,12 @@ class Inf
       opt :top, "Create a dir enclosing .inform and .materials", short: :none
       opt :git, "Support git", short: :none
       opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
+      opt :zterp, "zcode terp to launch on successful compile", type: :string, short: :none
+      opt :gterp, "glulx terp to launch on successful compile", type: :string, short: :none
+      opt :cheap_glulx, "glulx terp that uses only stdin and stdout", type: :string, short: :none
+      opt :cheap_zcode, "zcode terp that uses only stdin and stdout", type: :string, short: :none
+      opt :i7tohtml, "Location of i7tohtml.py", type: :string, short: :none
+      opt :browser, "browser to launch on unsuccessful compile", type: :string, short: :none
     end
     %i{ internal external }.each do |option|
       Optimist::die option, "must exist if specified" if @subopts[option] and !Dir.exist?(@subopts[option])
@@ -164,6 +178,12 @@ class Inf
       opt :inform6, "Location of inform6", type: :string, short: :none
       opt :cblorb, "Location of cBlorb", type: :string, short: :none
       opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
+      opt :i7tohtml, "Location of i7tohtml.py", type: :string, short: :none
+      opt :cheap_glulx, "glulx terp that uses only stdin and stdout", type: :string, short: :none
+      opt :cheap_zcode, "zcode terp that uses only stdin and stdout", type: :string, short: :none
+      opt :zterp, "zcode terp to launch on successful compile", type: :string, short: :none
+      opt :gterp, "glulx terp to launch on successful compile", type: :string, short: :none
+      opt :browser, "browser to launch on unsuccessful compile", type: :string, short: :none
     end
     opts = {}
     Inf7::Project::Fields.each do |field|
