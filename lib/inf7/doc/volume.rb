@@ -7,7 +7,7 @@ module Inf7
 
     class << self
       def [](**x)
-        Volume.new(x)
+        Volume.new(**x)
       end
       def update!
         wi = @volumes.find {|v| 'WI' == v.abbrev }

@@ -111,7 +111,7 @@ class Inf
     if !ARGV.empty? and ARGV.first.end_with?('.ni')
       Inf7::Project.bare_compile(ARGV.first, @subopts)
     else
-      Inf7::Project[ARGV,@subopts].compile
+      Inf7::Project[ARGV].compile(@subopts)
     end
   end
   def opt_init
@@ -183,13 +183,15 @@ class Inf
       opt :zterp, "zcode terp to launch on successful compile", type: :string, short: :none
       opt :gterp, "glulx terp to launch on successful compile", type: :string, short: :none
       opt :browser, "browser to launch on unsuccessful compile", type: :string, short: :none
+      opt :init, "Set user-wide instead of at project level", default: false, short: '-i'
     end
     opts = {}
+    init = @subopts[:init]
     Inf7::Project::Fields.each do |field|
       opts[field] = @subopts[field] if @subopts.key?("#{field}_given".to_sym)
     end
-    project = Inf7::Project[ARGV]
-    project.set(opts)
+    pp opts
+    (init ? Inf7::Project : Inf7::Project[ARGV]).set(opts)
   end
   def opt_ext
     @subopts = Optimist::options do
@@ -207,7 +209,7 @@ class Inf
     @subopts = Optimist::options do
       banner "options for install"
       opt :ext, "Path of desired extension", type: :string, short: :none
-      opt :init, "Install to config, not to a project"
+      opt :init, "Install to config, not to a project", short: '-i'
       opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
     end
     Optimist::die :ext, "not specified" unless @subopts[:ext]
@@ -277,6 +279,5 @@ class Inf
     Inf7::Project.census(@subopts.reject {|k,v| v.nil?})
   end
 end
-
 
 Inf.new

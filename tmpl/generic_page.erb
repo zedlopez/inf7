@@ -1,8 +1,12 @@
 <!doctype html>
 <html><head>
 <link rel="stylesheet" href="file://<%== Inf7::Conf.doc %>/style.css">
-<title><%= name %></title></head>
+<% if name %><title><%= name %></title><% end %></head>
 <body>
-<h1><%= head %></h1>
-<p><%= text %></p>
+<% if head %><h1><%= head %></h1><% end %>
+<% if text %>
+<div>
+<%== text %>
+</div>
+<% end %>
 </body></html>

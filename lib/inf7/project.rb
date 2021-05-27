@@ -42,7 +42,7 @@ module Inf7
     
     SettingsFields = %i{ create_blorb nobble_rng format }.to_set
     
-    attr_reader :dir, :name, :settings_file, :story, :source, :extensions_dir, :build, :release, :inf, :uuid, :quiet
+    attr_reader :dir, :name, :settings_file, :story, :source, :extensions_dir, :build, :inf, :uuid, :quiet
     attr_accessor :conf #:format, :create_blorb, :nobble_rng
 
 
@@ -57,6 +57,13 @@ module Inf7
         puts "\nDefaults"
         Inf7::Project::Defaults.keys.reject {|k| rc.key?(k) || Inf7::Project::SettingsFields.member?(k) || conf.key?(k)}.each {|k| puts "  #{k}: #{Inf7::Project::Defaults[k]}"}
       end
+    end
+
+    def self.set(options)
+      filename = File.join(Inf7::Conf.dir, 'inf7.yml')
+      Optimist::die("User settings don't exist; run setup") unless File.exist?(filename)
+      conf = YAML.load(File.read(filename)).merge(options.reject {|k| !Inf7::Project::Fields.member?(k)})
+      File.open(filename, 'w') {|f| f.write(YAML.dump(conf)) }
     end
     
     def self.bare_compile(filename, **args)
@@ -458,7 +465,8 @@ module Inf7
         write_source(@story, story_html, index_root: @index_root, build: @build, name: @name)
         ext_doc_dir = File.join(@index_root, 'doc')
         FileUtils.mkdir_p(ext_doc_dir)
-        extension_dir_list.unshift(@extensions_dir) 
+        extension_dir_list.unshift(@extensions_dir)
+        
       end
 
       extension_dir_list.each do |ext_dir|
@@ -567,7 +575,7 @@ module Inf7
         arg_list = []
         i7flags = options.key?(:i7flags)  ? options[:i7flags] : (options[:release] ? opt(:i7flagsrelease) : opt(:i7flagstest))
         arg_list << i7flags if !i7flags.empty?
-        { nobble_rng: :rng, release: release }.each_pair {|k,v| arg_list << "--#{v}" if opt(k) }
+        { nobble_rng: :rng, release: :release }.each_pair {|k,v| arg_list << "--#{v}" if opt(k) }
         %i{ index progress }.each {|s| arg_list << "--no#{s}" if !opt(s) }
         arg_list += [ '--internal', opt(:internal), '--external', opt(:external), '--project', dir.to_s ]
         report ([ni]+arg_list).join(' ')
@@ -578,6 +586,9 @@ module Inf7
           transform_html(filename, @build.join("#{basename.downcase}.html"), override: true) if File.exist?(filename)
         end
         make_source_html unless options[:temp]
+        if File.exist?(@build.join("Debug log.txt")) and up_to_date(output, @build.join("Debug log.txt"), override: true)
+          Inf7::Template.write(:generic_page, @build.join('debug_log.html'), name: "#{@name} Debug Log", head: "Debug Log", text: "<pre>#{File.read(@build.join('Debug log.txt'))}</pre>")
+        end
         if rc.exitstatus and rc.exitstatus.zero? # on SIGSEGV exitstatus is nil
           out_lines = stdout.split($/)
           out_lines[1].match(/source text, which is (\d+) words long\./)
