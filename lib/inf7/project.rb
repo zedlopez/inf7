@@ -587,7 +587,7 @@ module Inf7
         end
         make_source_html unless options[:temp]
         if File.exist?(@build.join("Debug log.txt")) and up_to_date(output, @build.join("Debug log.txt"), override: true)
-          Inf7::Template.write(:generic_page, @build.join('debug_log.html'), name: "#{@name} Debug Log", head: "Debug Log", text: "<pre>#{File.read(@build.join('Debug log.txt'))}</pre>")
+          Inf7::Template.write(:generic_page, @build.join('debug_log.html'), name: "#{@name} Debug Log", head: "Debug Log for #{@name}", text: File.read(@build.join('Debug log.txt')).gsub(/#{$/}#{$/}+/,$/*2).gsub(%r{#{$/}}, "<br>"))
         end
         if rc.exitstatus and rc.exitstatus.zero? # on SIGSEGV exitstatus is nil
           out_lines = stdout.split($/)
