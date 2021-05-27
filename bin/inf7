@@ -151,13 +151,12 @@ class Inf
   def opt_settings
     @subopts = Optimist::options do
       banner "Options for settings"
-      opt :project, "Project-local settings", short: :none
       opt :user, "User-wide settings", short: :none
       opt :defaults, "Default settings", short: :none
       opt :all, "Project, user, and default settings", short: :none
-    end.reject {|k,v| v.nil? or !%i{project user defaults all}.member?(k)}
+    end.reject {|k,v| v.nil? or !%i{user defaults all}.member?(k)}
 
-    Inf7::Project[ARGV].print_settings(@subopts)
+    (ARGV.empty? ? Inf7::Project : Inf7::Project[ARGV]).print_settings(@subopts)
   end
   def opt_set
     @subopts = Optimist::options do

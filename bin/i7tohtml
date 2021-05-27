@@ -78,25 +78,10 @@ formatter = HtmlFormatter(nowrap=True, classprefix='i7', lineseparator='\n')
 result = highlight(code, lexer, formatter)
 
 encode_ascii = codecs.getencoder('ascii')
-spaces_re = re.compile('  +')
-
-def spaces_replace(match):
-    num = match.end() - match.start()
-    if num == 0:
-        return ''
-    if num == 1:
-        return ' '
-    return ('&nbsp;' * (num-1)) + ' '
 
 for i, ln in enumerate(result.split('\n')):
-    ln = ln.rstrip()
-
-    # Convert any sequence of two or more spaces to a string of NBSP
-    # followed by a normal space. This gives us correct indentation.
-    ln = spaces_re.sub(spaces_replace, ln)
-
     # Convert non-ASCII characters to HTML encoded chars (&#NNN;)
-    ln = encode_ascii(ln, 'xmlcharrefreplace')[0].decode()
+    ln = encode_ascii(ln.rstrip(), 'xmlcharrefreplace')[0].decode()
     print(ln);
 
 

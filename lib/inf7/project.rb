@@ -44,6 +44,21 @@ module Inf7
     
     attr_reader :dir, :name, :settings_file, :story, :source, :extensions_dir, :build, :release, :inf, :uuid, :quiet
     attr_accessor :conf #:format, :create_blorb, :nobble_rng
+
+
+    def self.print_settings(options, rc = {})
+      options[:all] = !(options[:user] || options[:defaults])
+      conf = Inf7::Conf.conf
+      if (options[:user] || options[:all])
+        puts "\nUser-wide settings"
+        conf.keys.reject {|k| rc.key?(k) || Inf7::Project::SettingsFields.member?(k)}.each {|k| puts "  #{k}: #{conf[k]}"}
+      end
+      if (options[:defaults] || options[:all])
+        puts "\nDefaults"
+        Inf7::Project::Defaults.keys.reject {|k| rc.key?(k) || Inf7::Project::SettingsFields.member?(k) || conf.key?(k)}.each {|k| puts "  #{k}: #{Inf7::Project::Defaults[k]}"}
+      end
+    end
+    
     def self.bare_compile(filename, **args)
       Optimist::die "Can't find #{filename}" unless File.exist?(filename)
       cwd = Dir.pwd
@@ -143,7 +158,7 @@ module Inf7
     end
     
     def set(conf)
-      @conf = @conf.merge(conf)
+      @conf = @conf.merge(Inf7::Conf.absolutify(conf))
       write_settings_file
       write_rc
     end      
@@ -318,23 +333,15 @@ module Inf7
 
     def print_settings(options)
       rc = YAML.load(File.read(@rc))
-      conf = Inf7::Conf.conf
 
-      if (options[:project] || options[:all] || !(options[:all] || options[:user] || options[:defaults]))
+      if (options[:all] || !(options[:user] || options[:defaults]))
         puts "\n#{name} project settings"
         puts "  create_blorb: #{opt(:create_blorb) ? 'true' : 'false'}"
         puts "  format: #{opt(:format)}"
         puts "  nobble_rng: #{opt(:nobble_rng) ? 'true' : 'false'}"
         rc.keys.sort.each {|k| puts "  #{k}: #{rc[k]}"}
       end
-      if (options[:user] || options[:all])
-        puts "\nUser-wide settings"
-        conf.keys.reject {|k| rc.key?(k) || Inf7::Project::SettingsFields.member?(k)}.each {|k| puts "  #{k}: #{conf[k]}"}
-      end
-      if (options[:defaults] || options[:all])
-        puts "\nDefaults"
-        Inf7::Project::Defaults.keys.reject {|k| rc.key?(k) || Inf7::Project::SettingsFields.member?(k) || conf.key?(k)}.each {|k| puts "  #{k}: #{Inf7::Project::Defaults[k]}"}
-      end
+      Inf7::Project.print_settings(options, rc)
     end
 
     def deform(string)
@@ -489,9 +496,9 @@ module Inf7
     def compile(options={})
       if compile_ni(options) && compile_inform6(options) && compile_cblorb(options)
         if opt(:zterp) and ('zcode' == opt(:format))
-          system(opt(:zterp), opt(:create_cblorb) ? blorb : output)
+          system(opt(:zterp), up_to_date(blorb, output, override: true) ? blorb : output)
         elsif opt(:gterp) and ('glulx' == opt(:format))
-          system(opt(:gterp), opt(:create_cblorb) ? blorb : output)
+          system(opt(:gterp), up_to_date(blorb, output, override: true) ? blorb : output)
         end
       elsif opt(:browser) and File.exist?(@build.join('problems.html'))
         system(opt(:browser), @build.join('problems.html').to_s)
@@ -565,14 +572,13 @@ module Inf7
         arg_list += [ '--internal', opt(:internal), '--external', opt(:external), '--project', dir.to_s ]
         report ([ni]+arg_list).join(' ')
         FileUtils.mkdir_p(opt(:external))
-        puts ([ 'ni' ] + arg_list).join(' ')
         stdout, stderr, rc = Open3.capture3(ni, *arg_list)
         %w{ Problems StatusCblorb }.each do |basename|
           filename = @build.join("#{basename}.html").to_s
           transform_html(filename, @build.join("#{basename.downcase}.html"), override: true) if File.exist?(filename)
         end
         make_source_html unless options[:temp]
-        if rc.exitstatus and rc.exitstatus.zero?
+        if rc.exitstatus and rc.exitstatus.zero? # on SIGSEGV exitstatus is nil
           out_lines = stdout.split($/)
           out_lines[1].match(/source text, which is (\d+) words long\./)
           word_count = $1
@@ -583,6 +589,7 @@ module Inf7
         else
           STDERR.puts "Failed"
           STDERR.write(stderr)
+          # error_count = stdout ? (stdout.split(%r{#{$/}\s+>-->\s+}).count - 1) : 0
           return false
         end
         make_fakes if @conf[:fake]
@@ -636,8 +643,9 @@ module Inf7
       end
     end
 
-    def up_to_date(file1, file2)
-      !opt(:force) and File.exist?(file2) and (File.mtime(file2) > File.mtime(file1))
+    def up_to_date(file1, file2, override: false)
+      return false if opt(:force) and !override
+      File.exist?(file2) and (File.mtime(file2) >= File.mtime(file1))
     end
     
     def cli_ize(str)

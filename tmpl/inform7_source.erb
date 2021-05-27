@@ -3,7 +3,7 @@
 <link rel="stylesheet" href="file://<%== Inf7::Conf.doc %>/style.css">
 <script><%== Inf7::Template[:copycode].render %></script>
 <title><%= name ? name : "#{ext_name} by #{author}" %></title></head>
-<body>
+<body class="inform7-source">
 <%== Inf7::Template[:index_navbar].render(index_root: index_root, build: build) %>
 <%== contents %>
 </body></html>

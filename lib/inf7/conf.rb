@@ -25,6 +25,15 @@ module Inf7
         @conf[x]
       end
 
+      def absolutify(hash)
+        # ensure we have absolute paths        
+        %i{ internal external docs resources cheap_glulx cheap_zcode i7tohtml gterp zterp browser }.each do |dir_sym|
+          next unless hash.key?(dir_sym)
+          hash[dir_sym] = Pathname.new(hash[dir_sym]).expand_path.to_s
+        end
+        hash
+      end
+      
       def fetch(uri_str, limit = 10)
         raise ArgumentError, 'too many HTTP redirects' if limit.zero?
         response = Net::HTTP.get_response(URI(uri_str))
@@ -100,10 +109,7 @@ module Inf7
         raise RuntimeError.new("#{@conf[:external]} must be a writable directory") unless Dir.exist?(@conf[:external]) and File.writable?(@conf[:external])
         download if @conf[:download]
 
-        # ensure we have absolute paths        
-        %i{ internal external docs resources }.each do |dir_sym|
-          @conf[dir_sym] = Pathname.new(@conf[dir_sym]).expand_path.to_s
-        end
+        @conf = Inf7::Conf.absolutify(@conf)
         
         File.open(@file, 'w') {|f| f.write(YAML.dump(conf))}
         %w{ story extension }.each do |template|
