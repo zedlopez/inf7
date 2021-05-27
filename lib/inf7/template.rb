@@ -9,9 +9,11 @@ module Inf7
 
       def write(template_name, output_filename, **h)
         FileUtils.mkdir_p(File.dirname(output_filename))
+        result = Inf7::Template[template_name].render(**h)
         File.open(output_filename, 'w') do |f|
-          f.write(Inf7::Template[template_name].render(**h))
+          f.write(result)
         end
+        result
       end
 
       def path(template_name)

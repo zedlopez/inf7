@@ -7,8 +7,8 @@ class Inf
   Commands = { "setup" => "Set up inf7 environment (do this first)",
                "init" => "Initialize project",
                "compile" => "Compile project",
-               "settings" => "See project settings",
-               "set" => "Modify project settings",
+               "settings" => "See project or config settings",
+               "set" => "Modify project or config settings",
                "install" => "Install extension for project",
                "ext" => "Create extension for project",
                "fake" => "Create a fake equivalent to a project",
@@ -190,7 +190,6 @@ class Inf
     Inf7::Project::Fields.each do |field|
       opts[field] = @subopts[field] if @subopts.key?("#{field}_given".to_sym)
     end
-    pp opts
     (init ? Inf7::Project : Inf7::Project[ARGV]).set(opts)
   end
   def opt_ext
@@ -243,11 +242,15 @@ class Inf
   end
 
   def opt_clean
+    Optimist::die "No project found" if ARGV.empty?
+    project_name = ARGV.pop
     @subopts = Optimist::options do
       banner "Clean project's files"
+      opt :except, "A file to keep", type: :strings, short: '-x'
     end
-    project = Inf7::Project[ARGV,@subopts.reject {|k,v| v.nil?}]
-    project.clean
+    pp @subopts
+    project = Inf7::Project[[project_name], @subopts.reject {|k,v| v.nil?}]
+    project.clean(@subopts)
   end
     
   def opt_test

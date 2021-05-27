@@ -63,13 +63,16 @@ Commands:
   setup      Set up inf7 environment (do this first)
   init       Initialize project
   compile    Compile project
-  settings   See project settings
-  set        Modify project settings
+  settings   See project or config settings
+  set        Modify project or config settings
   install    Install extension for project
   ext        Create extension for project
   fake       Create a fake equivalent to a project
   doc        Regenerate documentation
   epub       Create epub
+  test       Test an extension
+  clean      Clean a project's build output
+  census     Take extension census
 ```
 
 You can also ask for help on any of the subcommands. ``--help`` must come _after_ the subcommand.
@@ -77,7 +80,6 @@ You can also ask for help on any of the subcommands. ``--help`` must come _after
 ```
 $ inf7 settings --help
 Options for settings
-  --project     Project-local settings
   --user        User-wide settings
   --defaults    Default settings
   --all         Project, user, and default settings
@@ -198,10 +200,11 @@ If you're in or under an Inform 7 project directory, inf7 defaults to operating 
 ```
 $ cd "A Walk in the Park.inform/Source"
 $ inf7
-/home/zed/inform/A Walk in the Park.inform/Build/auto.inf up to date
-/home/zed/inform/A Walk in the Park.inform/Build/output.ulx up to date
-/home/zed/inform/A Walk in the Park.inform/Build/output.gblorb up to date
+/usr/local/bin/ni --noprogress --internal /usr/local/share/inform7/Internal --external /home/zed/external --project /home/zed/inform/A Walk in the Park.inform
+[elided]
 ```
+
+TODO notes about compilation, --force, and project index / extension pages
 
 As seen above, inf7 defaults to not generating files if their source files haven't been changed. If you want to recompile regardless of modification time, you can specify the ``--force`` parameter.
 
@@ -289,7 +292,13 @@ Defaults
   progress: false
 ```
 
-To set project-level things, you could edit .rc.yml and Settings.plist directly, but there's also a ``set`` subcommand.
+settings may also be used without specifying a project to see the user config and/or defaults.
+
+```
+$ inf7 settings --user
+```
+
+To set project-level things, you could edit .rc.yml and Settings.plist directly, and to edit user-level things you could edit inf7.yml, but there's also a ``set`` subcommand.
 
 ```
 $ inf7 set --format zcode A\ Walk\ in\ the\ Park
@@ -303,7 +312,22 @@ A Walk in the Park project settings
   author: Sudo Nymme
 ```
 
-There isn't an equivalent ability to modify the config; just edit inf7.yml manually.
+To modify the user-wide config, specify the --init flag.
+
+```
+$ inf7 set --init --author "I.M. Plentor"
+$ inf7 settings --user
+
+User-wide settings
+  author: I.M. Plentor
+  internal: /usr/local/share/inform7/Internal
+  external: /home/zed/external
+  resources: /usr/share/gnome-inform7/Resources
+  docs: /usr/share/gnome-inform7/Documentation
+  top: false
+  git: false
+  quiet: false
+```
 
 ## Templates
 
@@ -435,8 +459,11 @@ Besides all the files Inform 7 usually leaves behind, inf7 leaves more in its tr
 - the Inform 7 Index directory's contents
 - inf7's own .index directory
 
+If you want to keep some things, use the --except flag, which can take multiple parameters (unique among inf7's flags)
+
+
 ```
-$ inf7 clean a_walk_in_the_park
+$ inf7 clean --except A\ Walk\ in\ the\ Park/Build/output.ulx A\ Walk\ in\ the\ Park/problems.html  A\ Walk\ in\ the\ Park 
 ```
 
 ## Setup from an existing installation
