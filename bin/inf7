@@ -248,9 +248,8 @@ class Inf
       banner "Clean project's files"
       opt :except, "A file to keep", type: :strings, short: '-x'
     end
-    pp @subopts
     project = Inf7::Project[[project_name], @subopts.reject {|k,v| v.nil?}]
-    project.clean(@subopts)
+    project.clean(@subopts[:except] ? @subopts[:except] : [])
   end
     
   def opt_test
@@ -278,6 +277,7 @@ class Inf
       opt :external, "Inform external directory", type: :string, short: :none
       opt :ni, "Location of ni", type: :string, short: :none
       opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
+      opt :force, "Always rewrite, ignoring modification time", default: false, short: :none
     end
     Inf7::Project.census(@subopts.reject {|k,v| v.nil?})
   end
