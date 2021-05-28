@@ -73,6 +73,7 @@ Commands:
   test       Test an extension
   clean      Clean a project's build output
   census     Take extension census
+  update     Update project's extensions from those in config
 ```
 
 You can also ask for help on any of the subcommands. ``--help`` must come _after_ the subcommand.
@@ -190,6 +191,15 @@ inf7 init --git "Ice Cream Shoppe"
 ### Initial extensions
 
 The inf7 config directory has an extensions subdirectory. If you put extensions there (with the author's name as parent directory, as usual), they'll be automatically copied to the extensions directory of any new projects. See Extensions for more information.
+
+If you have updated the contents of your config's extensions directory, you can copy those changes to a project with the update subcommand.
+
+```
+$ inf7 update "A Walk in the Park"
+```
+
+This simply copies the current contents of the config's extensions dir to the project's extensions dir. It overwrites any same-named extensions in the project but does not affect project extensions that aren't in common with the config.
+
 
 ## Compiling a project
 

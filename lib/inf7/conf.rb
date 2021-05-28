@@ -26,10 +26,11 @@ module Inf7
       end
 
       def absolutify(hash)
-        # ensure we have absolute paths        
-        %i{ internal external docs resources cheap_glulx cheap_zcode i7tohtml gterp zterp browser }.each do |dir_sym|
+        # ensure we have absolute paths
+        
+        %i{ internal external docs resources cheap_glulx cheap_zcode i7tohtml gterp zterp browser ni inform6 cblorb }.each do |dir_sym|
           next unless hash.key?(dir_sym)
-          hash[dir_sym] = Pathname.new(hash[dir_sym]).expand_path.to_s
+          hash[dir_sym] = (Pathname.new(hash[dir_sym]).expand_path).to_s
         end
         hash
       end

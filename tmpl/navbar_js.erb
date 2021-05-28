@@ -1,0 +1,25 @@
+<div class="index-navbar" style="font-family: sans-serif; font-weight: bold; font-size: 1.33rem; margin-bottom: 1rem;">
+<a style="padding-right: .75rem;" href="file://<%== index_root %>/Index/Welcome.html">Project Index</a>
+<a style="padding-right: .75rem;" href="file://<%== index_root %>/story.html">Source</a>
+<a style="padding-right: .75rem;" href="file://<%== build %>/problems.html">Problems</a>
+<a style="padding-right: .75rem;" href="file://<%== build %>/debug_log.html">Debug Log</a>
+<a style="padding-right: .75rem;" href="file://<%== index_root %>/doc/Extensions.html">Extensions</a>
+<a style="padding-right: .75rem;" href="file://<%== Inf7::Conf.doc %>/index.html">Docs</a>
+<a style="padding-right: .75rem;" href="file://<%== Inf7::Conf.doc %>/index.html#general-index">General Index</a>
+</div>
+
+
+
+function add_bar() {
+  let urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('project')) {
+    let div = document.createElement('div');
+    div.innerText = urlParams.get('project');
+    let body = document.querySelector("body");
+    body.insertBefore(div, body.firstChild);
+  } 
+
+
+}
+
+document.addEventListener("DOMContentLoaded", add_bar);

@@ -33,7 +33,6 @@ module Inf7
                  git: false,
                  :format => "glulx",
                  index: true,
-                 force: false,
                  progress: false,
                  arch: 'x86_64'
                }
@@ -45,9 +44,6 @@ module Inf7
     attr_reader :dir, :name, :settings_file, :story, :source, :extensions_dir, :build, :inf, :uuid, :quiet
     attr_accessor :conf #:format, :create_blorb, :nobble_rng
 
-
-
-    
     def self.print_settings(options, rc = {})
       options[:all] = !(options[:user] || options[:defaults])
       conf = Inf7::Conf.conf
@@ -68,7 +64,7 @@ module Inf7
       File.open(filename, 'w') {|f| f.write(YAML.dump(conf)) }
     end
     
-    def self.bare_compile(filename, **args)
+    def self.bare_compile(filename, args)
       Optimist::die "Can't find #{filename}" unless File.exist?(filename)
       cwd = Dir.pwd
       Dir.mktmpdir do |tmpdir|
@@ -100,31 +96,46 @@ module Inf7
       doc, code, example_pasties = extension.get_doc_and_code(i7tohtml)
       Inf7::Template.write(:source_code_partial, output_file, documentation: doc, code: code, example_pasties: example_pasties, **h)
     end
-    
-    def self.update_extension_docs(internal:, external:, project: nil, force: false)
+
+
+    # TODO check up_to_date
+    def self.update_extension_docs(internal:, external:, i7tohtml: nil, force: false, ext_loc: Hash.new {|h,k| h[k] = {} })
       puts "Project.update_extension_docs #{force}"
-      extension_locations = Hash.new {|h,k| h[k] = {} }
       extension_dir_list = [ external, File.join(internal, 'Extensions') ]
-      extension_dir_list.unshift(project.extensions_dir) if project
+#      extension_dir_list.unshift(project.extensions_dir) if project
       extension_dir_list.each do |ext_dir|
         Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
           ext_obj = Inf7::Extension.new(extension)
-           extension_locations[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] ||= { author: ext_obj.author_dir, ext_name: ext_obj.ext_name, path: extension }
+#          i7tohtml = (project || self).check_executable(:i7tohtml)
+          ext_obj.write_html(Inf7::Conf.ext, i7tohtml)
+          ext_loc[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] ||= ext_obj.formatted_path(Inf7::Conf.ext) #{ author: ext_obj.author_dir, ext_name: ext_obj.ext_name, path: extension }
         end
       end
-
-      extension_locations.keys.each do |author_dir|
-        extension_locations[author_dir].each_pair do |ext_base, hash|
-          next unless hash
-          dest_dir = File.join(Inf7::Conf.ext, File.dirname(hash[:path]))
-          contents_dest_file = File.join(dest_dir, "#{ext_base}.html")
-          name = "#{hash[:ext_name]} by #{hash[:author]}"
-          puts "writing partial for #{name} -> #{contents_dest_file}"
-          content = write_partial(hash[:path], contents_dest_file, force: force, name: name, project: project)
-          project.update_extension_doc(author_dir, ext_base, name, content, contents_dest_file, force: force) if project
-        end
-      end
+      ext_loc
     end
+          #dest_dir = File.join(Inf7::Conf.ext, File.dirname(hash[:path]))
+          #FileUtils.mkdir_p(dest_dir)
+          #dest_file = File.join(dest_dir, ext_obj.html(:full))
+          #Inf7::Template.write(:inform7_source2, dest_file, 
+
+          
+
+    #       extension_locations[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] ||= { author: ext_obj.author_dir, ext_name: ext_obj.ext_name, path: extension }
+    #     end
+    #   end
+
+    #   extension_locations.keys.each do |author_dir|
+    #     extension_locations[author_dir].each_pair do |ext_base, hash|
+    #       next unless hash
+    #       dest_dir = File.join(Inf7::Conf.ext, File.dirname(hash[:path]))
+    #       contents_dest_file = File.join(dest_dir, "#{ext_base}.html")
+    #       name = "#{hash[:ext_name]} by #{hash[:author]}"
+    #       puts "writing partial for #{name} -> #{contents_dest_file}"
+    #       content = write_partial(hash[:path], contents_dest_file, force: force, name: name, project: project)
+    #       project.update_extension_doc(author_dir, ext_base, name, content, contents_dest_file, force: force) if project
+    #     end
+    #   end
+    # end
 
     def self.smoketest(options)
       Optimist::die "Can't find #{options[:ext]}" unless File.exist?(options[:ext])
@@ -211,18 +222,30 @@ module Inf7
 
     def update_project_extension_docs(force: false)
       puts "update_project_extension_docs #{force}"
-      Inf7::Project.update_extension_docs(internal: opt(:internal), external: opt(:external), project: self, force: force)
+      i7tohtml = check_executable(:i7tohtml)
+#      Inf7::Project.update_extension_docs(internal: opt(:internal), external: opt(:external), force: force, i7tohtml: i7tohtml)
       ext_doc_dir = File.join(@index_root, 'doc')
+      @extension_locations = Hash.new {|h,k| h[k] = {} }
+
       FileUtils.mkdir_p(ext_doc_dir)
-      transform_html(File.join(opt(:external), 'Documentation', 'Extensions.html'), File.join(ext_doc_dir, 'Extensions.html')) 
+      Dir[File.join(@extensions_dir, '*', '*.i7x')].each do |extension|
+        ext_obj = Inf7::Extension.new(extension)
+        ext_obj.write_html(ext_doc_dir, i7tohtml)
+        @extension_locations[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] = ext_obj.formatted_path(ext_doc_dir)  #{ author: ext_obj.author_dir, ext_name: ext_obj.ext_name, path: extension }
+      end
+
+      @extension_locations = Inf7::Project.update_extension_docs(internal: opt(:internal), external: opt(:external), force: force, i7tohtml: i7tohtml, ext_loc: @extension_locations)
+      pp @extension_locations
+#      puts File.join(ext_doc_dir, 'Extensions.html')
+      transform_html(File.join(opt(:external), 'Documentation', 'Extensions.html'), File.join(ext_doc_dir, 'Extensions.html'))
     end
 
-    def update_extension_doc(author_dir, ext_base, name, content, contents_dest_file, force: false)
-      dest_dir = File.join(@index_root, 'source', author_dir)
-      FileUtils.mkdir_p(dest_dir)
-      dest_file = File.join(dest_dir, "#{ext_base}.html")
-      Inf7::Template.write(:inform7_source, dest_file, contents: content, index_root: @index_root, build: @build, name: name) unless up_to_date(contents_dest_file, dest_file)
-    end
+    # def update_extension_doc(author_dir, ext_base, name, content, contents_dest_file, force: false)
+    #   dest_dir = File.join(@index_root, 'source', author_dir)
+    #   FileUtils.mkdir_p(dest_dir)
+    #   dest_file = File.join(dest_dir, "#{ext_base}.html")
+    #   Inf7::Template.write(:inform7_source, dest_file, contents: content, index_root: @index_root, build: @build, name: name) unless up_to_date(contents_dest_file, dest_file)
+    # end
     
     def create_extension
       ext_author = opt(:author)
@@ -288,15 +311,7 @@ module Inf7
         [ @source, @build, @extensions_dir, @release ].each {|d| FileUtils.mkdir_p(d) }
         @conf = conf
         create_story
-        ext_dir = File.join(Inf7::Conf.dir, 'extensions')
-        if Dir.exist?(ext_dir)
-          Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
-            author_dir, ext_name = Inf7::Extension.author_extbase(extension)
-            dest_dir = File.join(@extensions_dir, author_dir)
-            FileUtils.mkdir_p(dest_dir)
-            FileUtils.cp(extension, dest_dir)
-          end
-        end
+        update
         if opt(:git)
           Dir.chdir(@top.to_s) do
             system 'git', 'init'
@@ -412,8 +427,16 @@ module Inf7
       when /Extensions\/(Extensions|ExtIndex)\.html/
         "file://#{@index_root}/doc/#{$1}.html"
       when /^\/Extensions/
-        target = string.sub(/\A\/Extensions\/Extensions/,'')
-        "file://#{@index_root}/source#{target.downcase}"
+        target = CGI.unescape(string.sub(/\A\/Extensions\/Extensions\//,'')).downcase
+        author, ext_name = target.split(%r{/})
+        ext_name = File.basename(ext_name, '.html')
+        puts "deform #{author}| #{ext_name}"
+        pp "#{@extension_locations[author.downcase][ext_name.downcase]}"
+        
+        loc = "#{@extension_locations[author.downcase][ext_name.downcase]}"
+        puts loc
+      #        "file://#{@index_root}/source#{target.downcase}"
+        "file://#{loc}"
       when /(R?doc\d+\.html)/
         "file://#{Inf7::Conf.doc}/#{Inf7::Doc.links.key?($1) ? [Inf7::Doc.links[$1][:file],Inf7::Doc.links[$1][:anchor]].join('#') : 'xyzzyplugh'}"
       else
@@ -422,8 +445,7 @@ module Inf7
     end
 
     def transform_html(infile, outfile, override: false)
-
-      return if up_to_date(infile, outfile) unless override
+      #return if up_to_date(infile, outfile) unless override
       @copycode ||= Inf7::Template[:copycode].render
       @navbar ||= Inf7::Template[:index_navbar].render(index_root: @index_root, build: @build.to_s)
       FileUtils.mkdir_p(File.dirname(outfile))
@@ -439,7 +461,18 @@ module Inf7
       contents.gsub!(%r{"source:.*?Extensions/([^#]+)(#line\d+)"}) do |m|
         ext_name = File.basename($1, '.i7x')
         author = File.dirname($1)
-        %Q{"file://#{File.join(@index_root, 'source', author, ext_name + '.html' + $2)}"}
+        puts "#{author} #{ext_name}"
+        pp @extension_locations[author.downcase][ext_name.downcase]
+        
+        result = %Q{"file://File.join(Inf7::Conf.ext, @extension_locations[author.downcase][ext_name.downcase][path]+'.html#{$2}')"}
+        puts result
+        
+        @extension_locations ? %Q{"file://File.join(Inf7::Conf.ext, @extension_locations[author.downcase][ext_name.downcase][path]+'.html#{$2}')"} : ""
+        
+#        %Q{"file://#{File.join(Inf7::Conf.ext, author.downcase, ext_name.downcase+'.html')}"}
+#@index_root, 'source', author, ext_name + '.html' + $2)}"}
+        #        %Q{"file://#{File.join(@index_root, 'source', author, ext_name + '.html' + $2)}"}
+        result
       end
       node = Nokogiri::HTML(contents)
       navbar_div = Inf7::Doc::Doc.create_element('div')
@@ -506,9 +539,9 @@ module Inf7
         if compile_inform6(options)
           compile_cblorb(options)
           if opt(:zterp) and ('zcode' == opt(:format))
-            system(opt(:zterp), up_to_date(blorb, output, override: true) ? blorb : output)
+            system(opt(:zterp), (!options[:temp] && up_to_date(blorb, output, override: true)) ? blorb : output)
           elsif opt(:gterp) and ('glulx' == opt(:format))
-            system(opt(:gterp), up_to_date(blorb, output, override: true) ? blorb : output)
+            system(opt(:gterp), (!options[:temp] && up_to_date(blorb, output, override: true)) ? blorb : output)
           end
         end
       elsif opt(:browser) and File.exist?(@build.join('problems.html'))
@@ -529,7 +562,6 @@ module Inf7
     # TODO Metadata.ifiction manifest.plist Release.blurb index.html
     def clean(except=[])
       exceptions = except.map {|e| Pathname.new(e).expand_path.to_s }.to_set
-      pp exceptions
       Find.find(@materials).select {|f| File.exist?(f) and f.end_with?('.eps') }.each {|g| File.unlink(g) }
       
       [ @dir.join('Index'), @index_root, @build ].each do |dirty|
@@ -558,7 +590,17 @@ module Inf7
 #      opt(name) || (TTY::Which.exist?(executable_name(name)) ? TTY::Which.which(executable_name(name)) : nil)
     end
 
-
+    def update
+      ext_dir = File.join(Inf7::Conf.dir, 'extensions')
+      if Dir.exist?(ext_dir)
+        Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
+          ext_obj = Inf7::Extension.new(extension)
+          dest_dir = File.join(@extensions_dir, ext_obj.author_dir)
+          FileUtils.mkdir_p(dest_dir)
+          FileUtils.cp(extension, dest_dir)
+        end
+      end
+    end
     
     private
 
@@ -630,10 +672,6 @@ module Inf7
       end
       make_fakes if @conf[:fake]
       return true
-      #      else
-      #        report "#{@inf} up to date"
-      #        return true
-      #      end
     end
 
     def compile_inform6(options)
