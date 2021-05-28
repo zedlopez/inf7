@@ -6,7 +6,7 @@
 <body class="inform7-source">
 <%== Inf7::Template[:index_truncated].render %>
 <table class="source-table"><tbody>
-<% if documentation %><tr><td></td><td class="line"><a href="javascript:copyCode(`<%= "Include #{name}." %>`)"><img border="0" src="<%= File.join(Inf7::Conf.doc, 'doc_images/paste.png') %>" alt="Copy Include <%= name %> to clipboard"></a> Include <%= name %>.</td></tr>
+<% if ext.documentation %><tr><td></td><td class="line"><a href="javascript:copyCode(`<%= "Include #{name}." %>`)"><img border="0" src="<%= File.join(Inf7::Conf.doc, 'doc_images/paste.png') %>" alt="Copy Include <%= name %> to clipboard"></a> Include <%= name %>.</td></tr>
 <%== Inf7::Template[:source_code_generic].render(lines: ext.documentation, line_nos: false, example_pasties: ext.example_pasties, name: ext.name) %><tr></tr><tr><td></td><td class="line">&nbsp;</td></tr><% end -%>
 <%== Inf7::Template[:source_code_generic].render(lines: ext.code, line_nos: true) %>
 </tbody>

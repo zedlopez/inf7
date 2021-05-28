@@ -22,17 +22,7 @@ module Inf7
     end
     
     def write_html(dest_dir_root, i7tohtml)
-      
-      #dest_dir = File.join(dest_dir_root, @extension_dir)
-      #puts "dest_dir_root: #{dest_dir_root} @extension_dir: #{@extension_dir} dest_dir: #{dest_dir}"
-      #puts "#{html(:author, downcase: true)}"
-      
-      #FileUtils.mkdir_p(dest_dir)
-      #puts "writing #{File.join(dest_dir, html(:author, downcase: true))} for #{@filename}"
-# TODO let get_doc_and_code be called on demand when @documentation, @code needed
- # TODO check up_to_date     
       get_doc_and_code(i7tohtml)
-      puts formatted_path(dest_dir_root)
       Inf7::Template.write(:extension_source, formatted_path(dest_dir_root), ext: self)
     end
 

@@ -1,25 +1,29 @@
-<div class="index-navbar" style="font-family: sans-serif; font-weight: bold; font-size: 1.33rem; margin-bottom: 1rem;">
-<a style="padding-right: .75rem;" href="file://<%== index_root %>/Index/Welcome.html">Project Index</a>
-<a style="padding-right: .75rem;" href="file://<%== index_root %>/story.html">Source</a>
-<a style="padding-right: .75rem;" href="file://<%== build %>/problems.html">Problems</a>
-<a style="padding-right: .75rem;" href="file://<%== build %>/debug_log.html">Debug Log</a>
-<a style="padding-right: .75rem;" href="file://<%== index_root %>/doc/Extensions.html">Extensions</a>
-<a style="padding-right: .75rem;" href="file://<%== Inf7::Conf.doc %>/index.html">Docs</a>
-<a style="padding-right: .75rem;" href="file://<%== Inf7::Conf.doc %>/index.html#general-index">General Index</a>
-</div>
-
-
-
 function add_bar() {
   let urlParams = new URLSearchParams(window.location.search);
   if (urlParams.has('project')) {
-    let div = document.createElement('div');
-    div.innerText = urlParams.get('project');
-    let body = document.querySelector("body");
-    body.insertBefore(div, body.firstChild);
-  } 
+    let project = decodeURIComponent(urlParams.get('project'));
+    let index_root = project + '/.index/';
+    let build = project + '/Build/';
 
-
+    let navbar = document.querySelector('div.index-navbar');
+    let links = [ { "Extensions": index_root + 'doc/Extensions.html' },
+                  { "Debug Log": build + 'debug_log.html' },
+                  { "Problems": build + 'problems.html' },
+                  { "Source": index_root + 'story.html' },
+                  { "Project Index": index_root + 'Index/Welcome.html' } ];
+                  let sp = document.createTextNode(" ");
+    links.forEach(h => {
+      Object.entries(h).forEach(([text, url]) => {
+        let a = document.createElement('a');
+        let href = document.createAttribute("href");
+        href.value = "file://"+url;
+        a.setAttributeNode(href);
+        let linktext = document.createTextNode(text);
+        a.appendChild(linktext);
+        navbar.insertBefore(sp.cloneNode(), navbar.firstChild);
+        navbar.insertBefore(a, navbar.firstChild);
+        })});
+  }
 }
 
 document.addEventListener("DOMContentLoaded", add_bar);
