@@ -68,7 +68,7 @@ module Inf7
       Optimist::die "Can't find #{filename}" unless File.exist?(filename)
       cwd = Dir.pwd
       Dir.mktmpdir do |tmpdir|
-        project = Inf7::Project.new(tmpdir, { top: true, allow_prior_existence: true })
+        project = Inf7::Project.new(tmpdir, { top: true, allow_prior_existence: true, temp: true })
         FileUtils.cp filename, project.story
         args[:create_blorb] = false
         args[:index] = false
@@ -116,7 +116,7 @@ module Inf7
     def self.smoketest(options)
       Optimist::die "Can't find #{options[:ext]}" unless File.exist?(options[:ext])
       Dir.mktmpdir do |tmpdir|
-        project = Inf7::Project.new(tmpdir, {}.merge(options).merge( { top: true, allow_prior_existence: true, index: false }))
+        project = Inf7::Project.new(tmpdir, {}.merge(options).merge( { top: true, allow_prior_existence: true, index: false, temp: true }))
         ext_obj = Inf7::Project.install({ext: options[:ext], project: project}, [])
         Inf7::Template.write(:smoketest, project.story, ext: ext_obj.ext_name, author: ext_obj.author_dir)
         project.compile({ temp: true })
@@ -157,6 +157,7 @@ module Inf7
     end
 
     def self.install(options, args)
+      ext = options[:ext]
       Optimist.die("#{ext} does not exist") unless File.exist?(ext)
       ext_obj = Inf7::Extension.new(ext)
       if options[:init]
@@ -199,9 +200,12 @@ module Inf7
       FileUtils.mkdir_p(ext_doc_dir)
       Dir[File.join(@extensions_dir, '*', '*.i7x')].each do |extension|
         ext_obj = Inf7::Extension.new(extension)
-        puts "Writing #{ext_obj.formatted_path(ext_doc_dir)}" #if opt(:verbose)
-        ext_obj.write_html(ext_doc_dir, i7tohtml)
-        @extension_locations[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] = ext_obj.formatted_path(ext_doc_dir)  #{ author: ext_obj.author_dir, ext_name: ext_obj.ext_name, path: extension }
+        destination = ext_obj.formatted_path(ext_doc_dir)
+         unless up_to_date(extension, destination)
+           ext_obj.write_html(ext_doc_dir, i7tohtml)
+           puts "Writing #{ext_obj.formatted_path(ext_doc_dir)}" #if opt(:verbose)
+         end
+        @extension_locations[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] = destination
       end
 
       @extension_locations = Inf7::Project.update_extension_docs(internal: opt(:internal), external: opt(:external), force: force, i7tohtml: i7tohtml, ext_loc: @extension_locations, project: self)
@@ -272,7 +276,7 @@ module Inf7
         [ @source, @build, @extensions_dir, @release ].each {|d| FileUtils.mkdir_p(d) }
         @conf = conf
         create_story
-        update
+        update unless conf[:temp]
         if opt(:git)
           Dir.chdir(@top.to_s) do
             system 'git', 'init'
@@ -401,11 +405,15 @@ module Inf7
 
     def transform_html(infile, outfile, override: false, ext_transform: false)
       return if up_to_date(infile, outfile) unless override or ext_transform
-      puts "Transforming #{infile}" if @verbose
+      puts "Transforming #{infile}" # if @verbose
+
+      
       @copycode ||= Inf7::Template[:copycode].render
       @navbar ||= Inf7::Template[:index_navbar].render(index_root: @index_root, build: @build.to_s)
       FileUtils.mkdir_p(File.dirname(outfile))
       contents = File.read(infile)
+      contents.sub!(%r{</style>}, %Q{</style><link rel="stylesheet" href="file://#{Inf7::Conf.doc}/style.css">})
+      contents.sub!(%r{<body>}, '<body="the_transformed">')
       contents.gsub!(%r{"inform:/([^"]+)"}) {|match| %Q{"#{deform($1)}"} }
       contents.gsub!(%r{'inform:/([^']+)'}) {|match| %Q{'#{deform($1)}'} }
       contents.gsub!(%r{inform:/([^\s>]+)}) {|match| deform($1) }
@@ -431,8 +439,7 @@ module Inf7
       story_html = File.join(@index_root, 'story.html')
 
       source = Inf7::Source.new(@story)
-      contents = Inf7::Template[:source_code_partial].render(documentation: nil, code: source.pretty_print(check_executable(:i7tohtml)))
-      Inf7::Template.write(:inform7_source, story_html, contents: contents, index_root: @index_root, build: @build, name: @name)
+      Inf7::Template.write(:inform7_source, story_html, index_root: @index_root, build: @build, name: @name, code: source.pretty_print(check_executable(:i7tohtml)))
     end
     
     def reindex
@@ -442,15 +449,20 @@ module Inf7
       end
     end
 
-    def compile(options={})
-      if compile_ni(options)
-        if compile_inform6(options)
-          compile_cblorb(options)
+    def play(options={})
           if opt(:zterp) and ('zcode' == opt(:format))
             system(opt(:zterp), (!options[:temp] && up_to_date(blorb, output, override: true)) ? blorb : output)
           elsif opt(:gterp) and ('glulx' == opt(:format))
             system(opt(:gterp), (!options[:temp] && up_to_date(blorb, output, override: true)) ? blorb : output)
           end
+    end
+
+    
+    def compile(options={})
+      if compile_ni(options)
+        if compile_inform6(options)
+          compile_cblorb(options)
+          play(options)
         end
       elsif opt(:browser) and File.exist?(@build.join('problems.html'))
         system(opt(:browser), @build.join('problems.html').to_s)
@@ -555,13 +567,15 @@ module Inf7
       report ([ni]+arg_list).join(' ')
       FileUtils.mkdir_p(opt(:external))
       stdout, stderr, rc = Open3.capture3(ni, *arg_list)
-      %w{ Problems StatusCblorb }.each do |basename|
-        filename = @build.join("#{basename}.html").to_s
-        transform_html(filename, @build.join("#{basename.downcase}.html"), override: true) if File.exist?(filename)
+      unless options[:temp]
+        %w{ Problems StatusCblorb }.each do |basename|
+          filename = @build.join("#{basename}.html").to_s
+          transform_html(filename, @build.join("#{basename.downcase}.html"), override: true) if File.exist?(filename)
+        end
+        make_source_html
       end
-      make_source_html unless options[:temp]
       if File.exist?(@build.join("Debug log.txt")) and up_to_date(@inf, @build.join("Debug log.txt"), override: true)
-        Inf7::Template.write(:generic_page, @build.join('debug_log.html'), name: "#{@name} Debug Log", head: "Debug Log for #{@name}", text: File.read(@build.join('Debug log.txt')).gsub(/#{$/}#{$/}+/,$/*2).gsub(%r{#{$/}}, "<br>"))
+        Inf7::Template.write(:navbar_page, @build.join('debug_log.html'), name: "#{@name} Debug Log", head: "Debug Log for #{@name}", text: File.read(@build.join('Debug log.txt')).gsub(/#{$/}#{$/}+/,$/*2).gsub(%r{#{$/}}, "<br>"))
       end
       if rc.exitstatus and rc.exitstatus.zero? # on SIGSEGV exitstatus is nil
         update_project_extension_docs(force: options[:force]) unless options[:temp]
@@ -571,7 +585,7 @@ module Inf7
         out_lines[-2].match(/(There were.*things\.)/)
         room_thing_count = $1
         report @verbose ? stdout : "Compiled #{word_count}-word source. #{room_thing_count}"
-        reindex if opt(:index)
+        reindex if opt(:index) and !options[:temp]
       else
         STDERR.puts "Failed"
         STDERR.puts(stdout) if stdout

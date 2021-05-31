@@ -27,7 +27,7 @@ module Inf7
     end
 
     def i7x(mode, downcase: false)
-      with_suffix(:i7x, mode, downcase)
+      with_suffix(:i7x, mode, downcase: downcase)
     end
 
     def html(mode, downcase: false)

@@ -1,11 +1,12 @@
 function add_bar() {
   let urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.has('project')) {
+  let navbar = document.querySelector('div.index-navbar');
+
+  if (navbar && urlParams.has('project')) {
     let project = decodeURIComponent(urlParams.get('project'));
     let index_root = project + '/.index/';
     let build = project + '/Build/';
 
-    let navbar = document.querySelector('div.index-navbar');
     let links = [ { "Extensions": index_root + 'doc/Extensions.html' },
                   { "Debug Log": build + 'debug_log.html' },
                   { "Problems": build + 'problems.html' },
@@ -16,7 +17,7 @@ function add_bar() {
       Object.entries(h).forEach(([text, url]) => {
         let a = document.createElement('a');
         let href = document.createAttribute("href");
-        href.value = "file://"+url;
+        href.value = "file://"+url+"?project="+encodeURIComponent(project);
         a.setAttributeNode(href);
         let linktext = document.createTextNode(text);
         a.appendChild(linktext);

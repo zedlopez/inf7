@@ -7,8 +7,8 @@
   <% end %>
 
   <% line = line.gsub(/\A ( )+/) {|match| "#{'&ensp;' * (match.length)} " } -%>
-
   <% if line.match(/\A(\t+)/) %><% num = $1.length %><% line = line.sub(/\A\t+/, "&ensp;&ensp;&ensp;&ensp;" * num) %><% end %>
+  <% if false and line.match(/\A((\t+)( ( )+)?)/) %><% matchtext = $1 %><% num = $2.length %><% if $4 and $4.length > 1 %><% spacesub = "#{'&ensp;' * ($4.length)} " %><% end %><% line = line.sub(/\A#{matchtext}/, "&ensp;&ensp;&ensp;&ensp;" * num + (spacesub ? spacesub : "")) %><% end %>
   <% if in_table -%>
     <% if line.strip.match(/\S/) and !line.match(/\A\s*(&ensp;)*with\s+\d+\s+blank\s+row/) -%>
       <% line = line.gsub(/\t+/,"\t") %>

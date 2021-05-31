@@ -17,7 +17,9 @@ class Inf
                "test" => "Test an extension",
                "clean" => "Clean a project's build output",
                "census" => "Take extension census",
-               "update" => "Update project's extensions from those in config"
+               "update" => "Update project's extensions from those in config",
+               "play" => "Play a game file, per gterp/zterp setting"
+               
              }
   
   attr_reader :main_opts, :command, :subopts
@@ -289,6 +291,14 @@ class Inf
     end
     Inf7::Project[ARGV].update
   end
+
+  def opt_play
+    @subopts = Optimist::options do
+      banner "Play a game file, per gterp/zterp setting"
+    end
+    Inf7::Project[ARGV].play
+  end
+
   
 end
 

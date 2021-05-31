@@ -108,9 +108,11 @@ module Inf7
       end
 
       def write_template_files
-        Inf7::Template.write(:copycode, File.join(Inf7::Conf.doc, 'copycode.js'))
-        Inf7::Template.write(:style, File.join(Inf7::Conf.doc, 'style.css'))
-        Inf7::Template.write(:onejs, File.join(Inf7::Conf.doc, 'one.js'))
+        { copycode: 'copycode.js',
+          style: 'style.css',
+          onejs: 'one.js' }.each_pair do |template, file|
+          Inf7::Template.write(template, File.join(Inf7::Conf.doc, file))
+        end
       end
     end
 
@@ -150,6 +152,22 @@ module Inf7
       puts unless options[:quiet] # TODO neaten
       Inf7::Doc.dump
       print "Writing docs" unless options[:quiet]
+
+
+      exdocdir = File.join(Inf7::Conf.doc,'examples')
+      FileUtils.mkdir_p(exdocdir)
+      Inf7::Doc::Example.examples.each_pair do |num,ex|
+        Inf7::Doc::Example.pastie_by_num.each_pair do |num, hash|
+          File.open(File.join(exdocdir, "ex#{num}.ni"), 'w') do |f|
+            f.write(hash[:pastie])
+            
+          end
+        end
+      end
+     
+
+
+      
       index = general_index
       Inf7::Doc.write_template_files
       Inf7::Template.write(:toc, File.join(Inf7::Conf.doc, 'index.html'), volumes: Inf7::Doc::Volume.volumes, index: Inf7::Doc.to_html(index, :chapter))

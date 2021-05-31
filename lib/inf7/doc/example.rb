@@ -7,8 +7,9 @@ module Inf7
       @examples = {}
       @examples_by_name = {}
       @examples_by_anchor = {}
+      @pastie_by_num = {}
       class << self
-        attr_accessor :examples, :examples_by_name, :examples_by_anchor
+        attr_accessor :examples, :examples_by_name, :examples_by_anchor, :pastie_by_num
 
         def [](num, name, target, content, section)
           num = num.to_i
@@ -51,7 +52,9 @@ module Inf7
         @num = num.to_i
         @target = target
         content.gsub!(/"javascript:pasteCode\('([^']+)'\)"/) do |m|
-          %Q{"javascript:copyCode(`#{Inf7::Doc.fix_javascript($1)}`)"}
+          payload = Inf7::Doc.fix_javascript($1)
+          Inf7::Doc::Example.pastie_by_num[num] = { pastie: CGI::unescapeHTML(payload).gsub(/\\n/,"\n").gsub(/\\t/,"\t"), name: name, target: target, section: section }
+          %Q{"javascript:copyCode(`#{payload}`)"}
         end
         @full = {}
         @node = Nokogiri::HTML::DocumentFragment.parse(content)
