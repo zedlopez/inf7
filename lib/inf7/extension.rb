@@ -34,15 +34,16 @@ module Inf7
       with_suffix(:html, mode, downcase: downcase)
     end
 
+    
+    
     def get_doc_and_code(i7tohtml)
-      raw = contents.split($/)
       in_doc = false
       in_example = false
       example_pasties = []
-      raw.each do |line|
+      prepped = []
+      lines.each do |line|
         in_doc = true if line.strip.match(/----\s+documentation\s+----/i)
-        next unless in_doc
-        if line.match(/\A\s*\*:(.*)\Z/)
+        if in_doc and line.match(/\A\s*\*:(.*)\Z/)
           in_example = true
           example_pasties << [$1]
         elsif in_example
@@ -52,11 +53,16 @@ module Inf7
             example_pasties.last << line
           end
         end
+        if line.match(/\A(\s+)(.*)\Z/)
+          whitespace, remainder = $1, $2
+          line = whitespace.gsub(/\t/, '   ') + remainder.rstrip
+        end
+        prepped << line.gsub(/\t+/,"\t")
       end
-      lines = pretty_print(i7tohtml)
+      pp_lines = pretty_print(i7tohtml, string: prepped.join($/))
       results = { doc: [], code: [] }
       in_doc = false
-      lines.each do |line|
+      pp_lines.each do |line|
         in_doc = true if line.strip.match(/----\s+documentation\s+----/i)
         results[ in_doc ? :doc : :code] << line
       end

@@ -82,7 +82,7 @@ module Inf7
     def self.census(options)
       Dir.mktmpdir do |tmpdir|
         project = Inf7::Project.new(tmpdir, options.merge( { top: true, allow_prior_existence: true }))
-        project.census(force: options[:force])
+        project.census(temp: true)
       end
     end
 
@@ -98,21 +98,6 @@ module Inf7
     end
 
     # TODO check up_to_date
-    def self.update_extension_docs(internal:, external:, i7tohtml: nil, force: false, ext_loc: Hash.new {|h,k| h[k] = {} }, project:)
-      extension_dir_list = [ external, File.join(internal, 'Extensions') ]
-      extension_dir_list.each do |ext_dir|
-        Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
-          ext_obj = Inf7::Extension.new(extension)
-          ext_loc[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] ||= ext_obj.formatted_path(Inf7::Conf.ext) #{ author: ext_obj.author_dir, ext_name: ext_obj.ext_name, path: extension }
-          unless project.up_to_date(extension, ext_obj.formatted_path(Inf7::Conf.ext))
-            puts "Writing #{ext_obj.formatted_path(Inf7::Conf.ext)}" if @verbose
-            ext_obj.write_html(Inf7::Conf.ext, i7tohtml)
-          end
-        end
-      end
-      ext_loc
-    end
-
     def self.smoketest(options)
       Optimist::die "Can't find #{options[:ext]}" unless File.exist?(options[:ext])
       Dir.mktmpdir do |tmpdir|
@@ -172,7 +157,7 @@ module Inf7
       return ext_obj
     end
 
-    def census(force: false)
+    def census
       ni = check_executable(:ni)
       if ni
         args = [ '--noprogress', '--internal', opt(:internal), '--external', opt(:external), '--census' ]
@@ -180,7 +165,7 @@ module Inf7
         stdout, stderr, rc = Open3.capture3(ni, *args)
         if rc.exitstatus.zero?
           report stdout unless opt(:quiet)
-          Inf7::Project.update_extension_docs(internal: opt(:internal), external: opt(:external), force: force, project: self)
+          project.update_extension_docs(temp: true)
         else
           STDERR.puts(stderr)
         end
@@ -193,23 +178,42 @@ module Inf7
       write_rc
     end      
 
-    def update_project_extension_docs(force: false)
+    # def self.update_extension_docs(internal:, external:, i7tohtml: nil, force: false, ext_loc: Hash.new {|h,k| h[k] = {} }, project:)
+    #   extension_dir_list = [ external, File.join(internal, 'Extensions') ]
+    #   extension_dir_list.each do |ext_dir|
+    #     Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
+    #       ext_obj = Inf7::Extension.new(extension)
+    #       ext_loc[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] ||= ext_obj.formatted_path(Inf7::Conf.ext) #{ author: ext_obj.author_dir, ext_name: ext_obj.ext_name, path: extension }
+    #       unless project.up_to_date(extension, ext_obj.formatted_path(Inf7::Conf.ext))
+    #         puts "Writing #{ext_obj.formatted_path(Inf7::Conf.ext)}" if @verbose
+    #         ext_obj.write_html(Inf7::Conf.ext, i7tohtml)
+    #       end
+    #     end
+    #   end
+    #   ext_loc
+    # end
+    
+    def update_extension_docs(temp: false)
       i7tohtml = check_executable(:i7tohtml)
-      ext_doc_dir = File.join(@index_root, 'doc')
-      @extension_locations = Hash.new {|h,k| h[k] = {} }
-      FileUtils.mkdir_p(ext_doc_dir)
-      Dir[File.join(@extensions_dir, '*', '*.i7x')].each do |extension|
-        ext_obj = Inf7::Extension.new(extension)
-        destination = ext_obj.formatted_path(ext_doc_dir)
-         unless up_to_date(extension, destination)
-           ext_obj.write_html(ext_doc_dir, i7tohtml)
-           puts "Writing #{ext_obj.formatted_path(ext_doc_dir)}" #if opt(:verbose)
-         end
-        @extension_locations[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] = destination
-      end
+      ext_dirs =  [ opt(:external), File.join(opt(:internal), 'Extensions') ]
+      project_ext_doc_dir = File.join(@index_root, 'doc')
 
-      @extension_locations = Inf7::Project.update_extension_docs(internal: opt(:internal), external: opt(:external), force: force, i7tohtml: i7tohtml, ext_loc: @extension_locations, project: self)
-      transform_html(File.join(opt(:external), 'Documentation', 'Extensions.html'), File.join(ext_doc_dir, 'Extensions.html'), ext_transform: true)
+      ext_dirs = temp ? {} : { @extensions_dir => project_ext_doc_dir }
+      ext_dirs[opt(:external)] = Inf7::Conf.ext
+      ext_dirs[File.join(opt(:internal), 'Extensions')] = Inf7::Conf.ext
+      @extension_locations = Hash.new {|h,k| h[k] = {} }
+      ext_dirs.each_pair do |ext_dir, ext_doc_dir|
+        Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
+          ext_obj = Inf7::Extension.new(extension)
+          destination = ext_obj.formatted_path(ext_doc_dir)
+          unless up_to_date(extension, destination)
+            ext_obj.write_html(ext_doc_dir, i7tohtml)
+            puts "Writing #{ext_obj.formatted_path(ext_doc_dir)}" if opt(:verbose)
+          end
+          @extension_locations[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] ||= destination
+        end
+      end
+      transform_html(File.join(opt(:external), 'Documentation', 'Extensions.html'), File.join(project_ext_doc_dir, 'Extensions.html'), ext_transform: true) unless temp
     end
 
     def create_extension
@@ -405,7 +409,7 @@ module Inf7
 
     def transform_html(infile, outfile, override: false, ext_transform: false)
       return if up_to_date(infile, outfile) unless override or ext_transform
-      puts "Transforming #{infile}" # if @verbose
+      puts "Transforming #{infile}" if @verbose
 
       
       @copycode ||= Inf7::Template[:copycode].render
@@ -413,7 +417,7 @@ module Inf7
       FileUtils.mkdir_p(File.dirname(outfile))
       contents = File.read(infile)
       contents.sub!(%r{</style>}, %Q{</style><link rel="stylesheet" href="file://#{Inf7::Conf.doc}/style.css">})
-      contents.sub!(%r{<body>}, '<body="the_transformed">')
+      contents.sub!(%r{<body>}, '<body class="the_transformed">')
       contents.gsub!(%r{"inform:/([^"]+)"}) {|match| %Q{"#{deform($1)}"} }
       contents.gsub!(%r{'inform:/([^']+)'}) {|match| %Q{'#{deform($1)}'} }
       contents.gsub!(%r{inform:/([^\s>]+)}) {|match| deform($1) }
@@ -439,7 +443,7 @@ module Inf7
       story_html = File.join(@index_root, 'story.html')
 
       source = Inf7::Source.new(@story)
-      Inf7::Template.write(:inform7_source, story_html, index_root: @index_root, build: @build, name: @name, code: source.pretty_print(check_executable(:i7tohtml)))
+      Inf7::Template.write(:inform7_source, story_html, index_root: @index_root, build: @build, name: @name, line_nos: true, code: source.pretty_print(check_executable(:i7tohtml)))
     end
     
     def reindex
@@ -519,8 +523,8 @@ module Inf7
       end
     end
     
-    def up_to_date(file1, file2, force: false, override: false)
-      return false if (force or opt(:force)) and !override
+    def up_to_date(file1, file2, override: false)
+      return false if opt(:force) and !override
       File.exist?(file2) and (File.mtime(file2) >= File.mtime(file1))
     end
 
@@ -558,6 +562,9 @@ module Inf7
 
     def compile_ni(options)
       ni = check_executable_or_die(:ni)
+      @conf[:force] ||= options[:force]
+      @verbose ||= options[:verbose]
+      @quiet ||= options[:quiet]
       arg_list = []
       i7flags = options.key?(:i7flags)  ? options[:i7flags] : (options[:release] ? opt(:i7flagsrelease) : opt(:i7flagstest))
       arg_list << i7flags if !i7flags.empty?
@@ -578,7 +585,7 @@ module Inf7
         Inf7::Template.write(:navbar_page, @build.join('debug_log.html'), name: "#{@name} Debug Log", head: "Debug Log for #{@name}", text: File.read(@build.join('Debug log.txt')).gsub(/#{$/}#{$/}+/,$/*2).gsub(%r{#{$/}}, "<br>"))
       end
       if rc.exitstatus and rc.exitstatus.zero? # on SIGSEGV exitstatus is nil
-        update_project_extension_docs(force: options[:force]) unless options[:temp]
+        update_extension_docs(temp: options[:temp])
         out_lines = stdout.split($/)
         out_lines[1].match(/source text, which is (\d+) words long\./)
         word_count = $1

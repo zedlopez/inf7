@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-i7tohtml: Hack of Andrew Plotkin's i7tohtml.py for inf7
+i7tohtml: Andrew Plotkin's i7tohtml.py hacked for inf7
 
 https://github.com/erkyrath/glk-dev/blob/master/i7tohtml.py
 
@@ -38,9 +38,7 @@ from pygments.formatters import HtmlFormatter
 from pygments.token import Token, Comment, String
 from pygments.filter import Filter
 
-fl = open(sys.argv[1])
-code = fl.read()
-fl.close()
+code = sys.stdin.read()
 
 class CleanI6Filter(Filter):
     """Clean up the fruit-salad of I6 syntax coloring that Pygments normally

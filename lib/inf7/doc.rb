@@ -153,21 +153,19 @@ module Inf7
       Inf7::Doc.dump
       print "Writing docs" unless options[:quiet]
 
-
       exdocdir = File.join(Inf7::Conf.doc,'examples')
       FileUtils.mkdir_p(exdocdir)
-      Inf7::Doc::Example.examples.each_pair do |num,ex|
-        Inf7::Doc::Example.pastie_by_num.each_pair do |num, hash|
-          File.open(File.join(exdocdir, "ex#{num}.ni"), 'w') do |f|
-            f.write(hash[:pastie])
-            
-          end
+      Inf7::Doc::Example.examples.each_pair do |num, example|
+        ni = File.join(exdocdir, "ex#{num}.ni")
+        pastie = example.pastie
+        next unless pastie
+        File.open(ni, 'w') do |f|
+          f.write(pastie)
         end
+        source_obj = Inf7::Source.new(ni)
+        Inf7::Template.write(:inform7_source, File.join(exdocdir, "ex#{num}.html"), index_root: '', build: '', name: "Example ##{num}", line_nos: false, code: source_obj.pretty_print(Inf7::Conf.conf[:i7tohtml], string: pastie))
       end
      
-
-
-      
       index = general_index
       Inf7::Doc.write_template_files
       Inf7::Template.write(:toc, File.join(Inf7::Conf.doc, 'index.html'), volumes: Inf7::Doc::Volume.volumes, index: Inf7::Doc.to_html(index, :chapter))

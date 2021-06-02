@@ -20,17 +20,24 @@
 
 require 'pp'
 
-def builder(*args)
-  flat = args.flatten
-  tokens = flat.map {|i| pp i; i.values.first }
-  regexps = []
-  args.each do |arg|
-    regexps << (arg.respond_to?(:each) ? %r{(?:#{builder(*arg)}?)} : %r{(#{arg})})
-  end
-  return regexps, tokens
+def recur(*args)
+#  regexps = []
+  pp args
+#  puts args.class
+#  args.each do |arg|
+#    regexps << arg.respond_to?(:to_a) ? "(?:#{builder(*arg)})?" : "(#{arg.keys.first})"
+  #  end
+  args.map {|arg| (!arg.respond_to?(:keys)) ? "(?:#{builder(*arg)})?" : "(#{arg.keys.first})" }.join
 end
 
-
+  
+def builder(*args)
+  puts 'entering builder'
+  regexp = %r{#{recur(*args)}}
+  flat = args.flatten
+  tokens = flat.map {|i| pp i; i.values.first }
+  return regexp, tokens
+end
 
 module Rouge
   module Lexers
@@ -240,68 +247,94 @@ module Rouge
                
 ws = { /[ ]+/ => WS }
 defn_list = [ ws,
-{ /.+?(?!(?:\bis\b|\())/ => Keyword },
+{ /.+?(?!(?:\s+(?:is|\()))/ => Keyword }, # a supporter
 
-[ ws, { /\(/ => Operator }, { /called/ => Keyword },
+[ ws,
+  { /\(/ => Operator }, # (
+  { /called/ => Keyword }, # called
 ws,
-{ /[^\)]+/ => Str::Symbol },
-{ /\)/ => Operator } ],
+{ /[^\)]+/ => Str::Symbol }, # T
+{ /\)/ => Operator } ], #)
 ws,
-{ /is/ => Keyword },
-{ /.+?/ => Str::Symbol },
-[ ws, { /rather\s+than/ => Keyword }, ws, { /.+?/ => Str::Symbol } ],
+{ /is/ => Keyword }, # is
+ws,
+{ /.+?(?!(?:rather|if|unless))/ => Str::Symbol }, # hefty
+[ ws, { /rather\s+than/ => Keyword }, ws, { /.+?/ => Str::Symbol } ], # rather than light
+ws,
 { /if|unless/ => Keyword },
 ws,
 { /[^.]+/ => Keyword },
 { /\./ => Operator } ]
 
 state :defn_preamble do
-      defn_regexp, defn_tokens = builder(*defn_list)
+  defn_regexp, defn_tokens = builder(*defn_list)
+  puts defn_regexp
 rule(defn_regexp) do |m|
-  churn(m, *tokens)
+  churn(m, *defn_tokens)
 pop!
 end
 rule(//) { pop! }
 end
 
-        
+def churn(m, *args)
+  args.each.with_index(1) do |tok, i|
+    token tok, m[i] if m[i]
+  end
+end
 
-               
-               state :definition_preamble do
-#                 puts 'defn preamble'
+state :phrase do
+  rule(/([^.]+)(\.)/) do |m|
+    token Keyword, m[1];
+    token Punctuation, m[2];
+    pop!
+    push :main
+  end
+end
 
-#%r{(.+?(?!\bis)(?!\())([ ]+)(\(called T\)([ ]+))?(is)}
-                 
-                 rule(/([ ]+)(.+?(?!(?:\bis\b|\()))(?:([ ]+)(\()(called)([ ]+)([^\)]+)(\)))?([ ]+)(is)([ ]+)(.+?)(?:([ ]+)(rather\s+than)([ ]+)(.+?))?([ ]+)(if|unless)([ ]+)([^.]+)(\.)/) do |m|
-                   churn(m,
-                     Text::Whitespace,
-                     Str::Symbol, # label for a kind "A text" "A supporter"
-                     Text::Whitespace,
-                     Operator, # (
-                     Keyword::Pseudo, # called
-                     Text::Whitespace,
-                     Str::Symbol, # T
-                     Operator, # )
-                     Text::Whitespace,
-                     Keyword, # is
-                     Text::Whitespace,
-                     Str::Symbol, # new adjective
-                     Text::Whitespace,
-                     Keyword, # rather than
-                     Text::Whitespace,
-                     Str::Symbol, # new opposite-adjective
-                     Text::Whitespace,
-                     Keyword, # if|unless
-                     Text::Whitespace,
-                     Keyword, # condition
-                     Operator # .
-                        )
-                   pop!        
-                 end
-                 rule(//) { pop! }
-               end
+state :defn_adj do
+#  puts "\nin defn_adj"
+  rule(/(\s+)(rather\s+than)(\s+)/) do |m|
+#    puts "\nin rather than"
+    token WS, m[1];
+    token Keyword, m[2];
+    token WS, m[3];
+  end
+  rule(/(\s+)(if|unless)(\s+)/) do |m|
+#    puts "\nin if/unless"
+    token WS, m[1];
+    token Keyword, m[2];
+    token WS, m[3];
+    pop!
+    push :phrase
+  end
+#  rule /.+(?!(?:rather\s+than|if|unless))/, Str::Symbol
+  #  rule /.+(?:(?!if))/, Str::Symbol
+  rule /./, Str::Symbol
+end
 
-               
+state :definition_preamble do
+#  puts "\nin definition_preamble"
+  rule(/(\s+)(is)(\s+)/) do |m|
+    token WS, m[1];
+    token Keyword, m[2];
+    token WS, m[3];
+    push :defn_adj
+  end
+  rule(/(\s+)(\()(\s+)?(called)(\s+)([^\)]+)(\s+)?(\))(\s+)/) do |m|
+    token WS, m[1];
+    token Operator, m[2];
+    token WS, m[3] if m[3];
+    token Keyword, m[4];
+    token WS, m[5];
+    token Str::Symbol, m[6];
+    token WS, m[7] if m[7];
+    token Operator, m[8];
+    token WS, m[9];
+    push :defn_adj
+  end
+  rule /./, Str::Symbol
+end
+
                state :main do
 #        puts "\n*main*\n"
                rule %r/\n/, NL, :bol
@@ -312,7 +345,11 @@ end
         rule /[ ]+/, Text::Whitespace
                #        rule /To/i, Keyword, :phrase_preamble
                #        rule /At/i, Keyword, :at_time_preamble
-               rule /Definition:/i, Keyword, :defn_preamble # :definition_preamble
+               rule(/(Definition:)(\s+)/i) do |m|
+                 token Keyword, m[1];
+                 token WS, m[2];
+                 push :definition_preamble # :defn_preamble #
+               end
                rule /[_\w]/, Generic, :generic
                
                
@@ -330,15 +367,6 @@ end
       
       state :root do
         rule /\[/, Comment, :nested_comment
-      end
-
-      def churn(m, *args)
-#      1.upto(m.size) {|i| puts "#{i} #{m[i]}" if m[i] }
-
-
-        args.each.with_index(1) do |tok, i|
-            token tok, m[i] if m[i]
-          end
       end
 
     class Extension < Inform7

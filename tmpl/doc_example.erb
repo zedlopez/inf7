@@ -1,0 +1,21 @@
+<div id="example-<%= num %>" <% if example.first.match(/\A<span class="i7cm">\[(.*?)\]<\/span>\Z/) %><% in_comment = true %> class="code-comment" <% else %><% in_comment = false %> class="code" <% end %>><a href="javascript:copyCode(`<%= payload %>`)"><img border="0" src="<%= File.join(Inf7::Conf.doc, 'doc_images/paste.png') %>" alt="Copy Example <%= num %> to clipboard"></a>&emsp; 
+<% example.each do |line| %>
+  <% if line.match(/\A<span class="i7cm">\[(.*?)\]<\/span>\s*\Z/) %>
+  <!-- matched i7 cm -->
+    <% unless in_comment %>
+    <!-- wasn't in comment -->
+      <% in_comment = true %>
+      </div><div class="code-comment">
+    <% end %>
+    <%== $1 %><br>
+  <% else %>
+  <!-- didn't match i7cm -->
+    <% if in_comment  and line.match(/\S/) %>
+    <!-- was in comment -->
+      </div><div class="code">
+      <% in_comment = false %>
+    <% end %>
+    <%== line.chomp %><br>
+  <% end %>
+<% end %>
+</div>

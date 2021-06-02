@@ -1,28 +1,29 @@
 <% in_table = false -%>
 <% lines.each.with_index(1) do |line, j| %>
-
+  <% line = line.rstrip %>
   <% if !line_nos and line.match(/\A\s*\*:/) %>
     <% example = CGI.escapeHTML(example_pasties.shift.map {|l| l.sub(/\A\t?/,'')}.join('\n').lstrip) %>
     <% line.sub!(/\*:\s*/, %Q{#{$1}<a href="javascript:copyCode(`#{example}`)"><img border="0" src="#{File.join(Inf7::Conf.doc, 'doc_images/paste.png')}"></a> }) %>
   <% end %>
-
-  <% line = line.gsub(/\A ( )+/) {|match| "#{'&ensp;' * (match.length)} " } -%>
-  <% if line.match(/\A(\t+)/) %><% num = $1.length %><% line = line.sub(/\A\t+/, "&ensp;&ensp;&ensp;&ensp;" * num) %><% end %>
-  <% if false and line.match(/\A((\t+)( ( )+)?)/) %><% matchtext = $1 %><% num = $2.length %><% if $4 and $4.length > 1 %><% spacesub = "#{'&ensp;' * ($4.length)} " %><% end %><% line = line.sub(/\A#{matchtext}/, "&ensp;&ensp;&ensp;&ensp;" * num + (spacesub ? spacesub : "")) %><% end %>
+  <% if line.match(/\A(\s*)(<[^>]+>)?(\s+)(\S.*)\Z/) %>
+    <% leading_whitespace, initial_tag, initial_whitespace, rest = $1, $2, $3, $4 %>
+    <% initial_whitespace = initial_whitespace + (leading_whitespace || "") %>
+    <% initial_whitespace = ' ' + '&ensp;' * (initial_whitespace.length - 1) %>
+    <% line = (initial_tag || "") + initial_whitespace + rest %>
+  <% end %>
   <% if in_table -%>
-    <% if line.strip.match(/\S/) and !line.match(/\A\s*(&ensp;)*with\s+\d+\s+blank\s+row/) -%>
-      <% line = line.gsub(/\t+/,"\t") %>
+    <% if !line.match(/\A(\s|&ensp)*\Z/) and !line.match(/with\s+(?:\d+\s+)?blank\s+row/) -%>
       <tr><% if line_nos -%><td class="line-number"><%= j %><% else -%><td>&ensp;<% end -%></td><td class="line"<% if line_nos %> id="line<%= j %>"<% end %>><%== line.gsub(/\t/, "</td><td>") %></td></tr>
     <% else -%>
       <% in_table = false -%>
-      </tbody></table><table class="source-table"><tbody><tr><% if line_nos -%><td class="line-number"><%= j %><% else -%><td>&ensp;<% end -%></td><td class="line"<% if line_nos %> id="line<%= j %>"<% end %>><%== line.gsub(/\t/, "&ensp;&ensp;&ensp;&ensp;") %></td></tr>
+      </tbody></table><table class="source-table"><tbody><tr><% if line_nos -%><td class="line-number"><%= j %><% else -%><td>&ensp;<% end -%></td><td class="line"<% if line_nos %> id="line<%= j %>"<% end %>><%== line %></td></tr>
     <% end -%>
   <% else -%>
-    <% if line.match(/\A\s*(&ensp;)*Table\s+(?:of|\d+(?:\.\d+)?)\b/) %>
+    <% if line.match(/\A(?:<[^>]+>)?(\s|&ensp;)*Table\s+(?:of|\d+(?:\.\d+)?)\b/) %>
       <% in_table = true -%>
       <tr><% if line_nos -%><td class="line-number"><%= j %><% else -%><td>&ensp;<% end -%></td><td class="line"<% if line_nos %> id="line<%= j %>"<% end %>><%== line %></td></tr></table><table class="source-table"><tbody>
     <% else -%>
-      <tr><% if line_nos -%><td class="line-number"><%= j %><% else -%><td>&ensp;<% end -%></td><td class="line"<% if line_nos %> id="line<%= j %>"<% end %>><%== line.gsub(/\t/, "&ensp;&ensp;&ensp;&ensp;") %></td></tr>
+      <tr><% if line_nos -%><td class="line-number"><%= j %><% else -%><td>&ensp;<% end -%></td><td class="line"<% if line_nos %> id="line<%= j %>"<% end %>><%== line %></td></tr>
     <% end -%>
   <% end -%>
 <% end -%>

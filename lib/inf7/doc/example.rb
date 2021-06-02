@@ -7,7 +7,7 @@ module Inf7
       @examples = {}
       @examples_by_name = {}
       @examples_by_anchor = {}
-      @pastie_by_num = {}
+#      @pastie_by_num = {}
       class << self
         attr_accessor :examples, :examples_by_name, :examples_by_anchor, :pastie_by_num
 
@@ -32,7 +32,7 @@ module Inf7
       end
 
       attr_accessor :content, :sources, :node
-      attr_reader :num, :name, :section, :target, :stars
+      attr_reader :num, :name, :section, :target, :stars, :payload
 
       def linkback(link_format = :chapter)
         linkback_div = Inf7::Doc::Doc.create_element('div', class: 'linkback')
@@ -44,17 +44,31 @@ module Inf7
       end
       
       def full(output_format = :html, link_format = :chapter)
-        @full[output_format].dup << @inner_div << linkback(link_format)
+        if false # !@payload.empty?
+          source_obj = Inf7::Source.new(File.join(Inf7::Conf.doc,'examples',"ex#{num}.ni"))
+          d = Inf7::Doc::Doc.create_element('div')
+          d.inner_html = Inf7::Template[:doc_example].render(payload: pastie, num: @num, example: source_obj.pretty_print(Inf7::Conf.conf[:i7tohtml], string: pastie))
+          @full[output_format].dup << d << linkback(link_format)
+        else
+          @full[output_format].dup << @inner_div << linkback(link_format)
+        end
+      end
+
+      def pastie(arg = nil)
+        return nil unless arg or !@payload.empty?
+        arg ||= @payload.first
+        CGI::unescapeHTML(arg).gsub(/\\n/,"\n").gsub(/\\t/,"\t")
       end
       
       def initialize(num, name, target, content, section)
         @name = name
         @num = num.to_i
         @target = target
+        @payload = []
         content.gsub!(/"javascript:pasteCode\('([^']+)'\)"/) do |m|
-          payload = Inf7::Doc.fix_javascript($1)
-          Inf7::Doc::Example.pastie_by_num[num] = { pastie: CGI::unescapeHTML(payload).gsub(/\\n/,"\n").gsub(/\\t/,"\t"), name: name, target: target, section: section }
-          %Q{"javascript:copyCode(`#{payload}`)"}
+          fixed =  Inf7::Doc.fix_javascript($1)
+          %Q{"javascript:copyCode(`#{fixed}`)"}
+          @payload << fixed
         end
         @full = {}
         @node = Nokogiri::HTML::DocumentFragment.parse(content)

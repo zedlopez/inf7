@@ -1,4 +1,5 @@
 require 'open3'
+require 'pp'
 
 module Inf7
   class Source
@@ -8,11 +9,17 @@ module Inf7
     end
 
     def lines
-      @contents.split($/)
+      contents.split($/)
     end
-    def pretty_print(i7tohtml)
-      return lines unless i7tohtml
-      stdout, stderr, rc = Open3.capture3(i7tohtml, @filename)
+
+    def preprocess
+
+    end
+    
+    
+    def pretty_print(i7tohtml, string: contents)
+      return string.split($/) unless i7tohtml
+      stdout, stderr, rc = Open3.capture3(i7tohtml, @filename, :stdin_data => string)
       if rc.exitstatus and rc.exitstatus.zero? # on SIGSEGV exitstatus is nil
         result = stdout.split($/)
       else

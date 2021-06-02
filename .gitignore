@@ -7,7 +7,7 @@
 /spec/reports/
 /tmp/
 *~
-.\#*\#
+.\#*
 \#*\#
 *.inform/*
 *.materials/*
