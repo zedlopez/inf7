@@ -9,6 +9,7 @@ require 'pathname'
 require 'optimist'
 require 'tempfile'
 require 'tmpdir'
+require 'base64'
 require 'open3'
 require 'erubi'
 require 'find'
@@ -178,21 +179,6 @@ module Inf7
       write_rc
     end      
 
-    # def self.update_extension_docs(internal:, external:, i7tohtml: nil, force: false, ext_loc: Hash.new {|h,k| h[k] = {} }, project:)
-    #   extension_dir_list = [ external, File.join(internal, 'Extensions') ]
-    #   extension_dir_list.each do |ext_dir|
-    #     Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
-    #       ext_obj = Inf7::Extension.new(extension)
-    #       ext_loc[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] ||= ext_obj.formatted_path(Inf7::Conf.ext) #{ author: ext_obj.author_dir, ext_name: ext_obj.ext_name, path: extension }
-    #       unless project.up_to_date(extension, ext_obj.formatted_path(Inf7::Conf.ext))
-    #         puts "Writing #{ext_obj.formatted_path(Inf7::Conf.ext)}" if @verbose
-    #         ext_obj.write_html(Inf7::Conf.ext, i7tohtml)
-    #       end
-    #     end
-    #   end
-    #   ext_loc
-    # end
-    
     def update_extension_docs(temp: false)
       i7tohtml = check_executable(:i7tohtml)
       ext_dirs =  [ opt(:external), File.join(opt(:internal), 'Extensions') ]
@@ -206,7 +192,7 @@ module Inf7
         Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
           ext_obj = Inf7::Extension.new(extension)
           destination = ext_obj.formatted_path(ext_doc_dir)
-          unless up_to_date(extension, destination)
+          unless up_to_date(extension, destination) and !(@extension_locations.key?(ext_obj.author_dir.downcase) and @extension_locations[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] == destination)
             ext_obj.write_html(ext_doc_dir, i7tohtml)
             puts "Writing #{ext_obj.formatted_path(ext_doc_dir)}" if opt(:verbose)
           end
@@ -399,7 +385,7 @@ module Inf7
         target = CGI.unescape(string.sub(/\A\/Extensions\/Extensions\//,'')).downcase
         author, ext_name = target.split(%r{/})
         ext_name = File.basename(ext_name, '.html')
-        "file://#{@extension_locations[author.downcase][ext_name.downcase]}?project=#{CGI.escape(@dir.to_s)}"
+        "file://#{@extension_locations[author.downcase][ext_name.downcase]}?#{query_arg}"
       when /(R?doc\d+\.html)/
         "file://#{Inf7::Conf.doc}/#{Inf7::Doc.links.key?($1) ? [Inf7::Doc.links[$1][:file],Inf7::Doc.links[$1][:anchor]].join('#') : 'xyzzyplugh'}"
       else
@@ -407,13 +393,16 @@ module Inf7
       end
     end
 
+    def query_arg
+      "project=#{CGI.escape(@dir.to_s)}"
+    end
+    
     def transform_html(infile, outfile, override: false, ext_transform: false)
       return if up_to_date(infile, outfile) unless override or ext_transform
       puts "Transforming #{infile}" if @verbose
 
       
       @copycode ||= Inf7::Template[:copycode].render
-      @navbar ||= Inf7::Template[:index_navbar].render(index_root: @index_root, build: @build.to_s)
       FileUtils.mkdir_p(File.dirname(outfile))
       contents = File.read(infile)
       contents.sub!(%r{</style>}, %Q{</style><link rel="stylesheet" href="file://#{Inf7::Conf.doc}/style.css">})
@@ -441,9 +430,8 @@ module Inf7
     def make_source_html
       Inf7::Doc.write_template_files
       story_html = File.join(@index_root, 'story.html')
-
       source = Inf7::Source.new(@story)
-      Inf7::Template.write(:inform7_source, story_html, index_root: @index_root, build: @build, name: @name, line_nos: true, code: source.pretty_print(check_executable(:i7tohtml)))
+      Inf7::Template.write(:inform7_source, story_html, navbar: @navbar, name: @name, line_nos: true, code: source.pretty_print(check_executable(:i7tohtml)))
     end
     
     def reindex
@@ -466,6 +454,11 @@ module Inf7
       if compile_ni(options)
         if compile_inform6(options)
           compile_cblorb(options)
+#          FileUtils.cp_r("/home/zed/src/ruby/inf7bundlegem/inf7/parchment", @build) unless File.exist?(@build.join('parchment'))
+#          Inf7::Template.write(:play, @build.join('parchment', 'play.html'), name: @name, author: @author, navbar: @navbar)
+#          File.open(@build.join('parchment','interpreter',"#{@name}.gblorb.js"), 'w') do |file|
+#            file.write("$(document).ready(function() { GiLoad.load_run(null, '#{ Base64.strict_encode64(File.read(output)) }', 'base64');});")
+#          end
           play(options)
         end
       elsif opt(:browser) and File.exist?(@build.join('problems.html'))
@@ -571,9 +564,13 @@ module Inf7
       { nobble_rng: :rng, release: :release }.each_pair {|k,v| arg_list << "--#{v}" if opt(k) }
       %i{ index progress }.each {|s| arg_list << "--no#{s}" if !opt(s) }
       arg_list += [ '--internal', opt(:internal), '--external', opt(:external), '--project', dir.to_s ]
+      arg_list << "--format=v8" if (options[:format] == 'zcode') or (opt(:format) == 'zcode')
       report ([ni]+arg_list).join(' ')
       FileUtils.mkdir_p(opt(:external))
       stdout, stderr, rc = Open3.capture3(ni, *arg_list)
+
+      @navbar = Inf7::Template[:index_navbar].render(index_root: @index_root, build: @build.to_s, query_arg: query_arg)
+
       unless options[:temp]
         %w{ Problems StatusCblorb }.each do |basename|
           filename = @build.join("#{basename}.html").to_s
@@ -582,7 +579,7 @@ module Inf7
         make_source_html
       end
       if File.exist?(@build.join("Debug log.txt")) and up_to_date(@inf, @build.join("Debug log.txt"), override: true)
-        Inf7::Template.write(:navbar_page, @build.join('debug_log.html'), name: "#{@name} Debug Log", head: "Debug Log for #{@name}", text: File.read(@build.join('Debug log.txt')).gsub(/#{$/}#{$/}+/,$/*2).gsub(%r{#{$/}}, "<br>"))
+        Inf7::Template.write(:navbar_page, @build.join('debug_log.html'), navbar: @navbar, name: "#{@name} Debug Log", head: "Debug Log for #{@name}", subhead: "Generated #{Time.now}", text: File.read(@build.join('Debug log.txt')).gsub(/#{$/}#{$/}+/,$/*2).gsub(%r{#{$/}}, "<br>"))
       end
       if rc.exitstatus and rc.exitstatus.zero? # on SIGSEGV exitstatus is nil
         update_extension_docs(temp: options[:temp])

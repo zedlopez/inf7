@@ -1,10 +1,10 @@
 <!doctype html>
 <html><head>
-<link rel="stylesheet" href="file://<%== Inf7::Conf.doc %>/style.css">
 <script><%== Inf7::Template[:onejs].render %></script>
+<link rel="stylesheet" href="file://<%== Inf7::Conf.doc %>/style.css">
 <% if name %><title><%= name %></title><% end %></head>
 <body>
-<%== navbar %>
+<%== Inf7::Template[:index_truncated].render %>
 <% if head %><h1><%= head %></h1><% end %>
 <% if subhead %><h2><%= subhead %></h2><% end %>
 <% if text %>

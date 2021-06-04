@@ -3,6 +3,7 @@ function add_bar() {
   let navbar = document.querySelector('div.index-navbar');
 
   if (navbar && urlParams.has('project')) {
+    navbar.setAttribute('class', 'index-navbar'); // removes hidden
     let project = decodeURIComponent(urlParams.get('project'));
     let index_root = project + '/.index/';
     let build = project + '/Build/';
@@ -15,14 +16,25 @@ function add_bar() {
                   let sp = document.createTextNode(" ");
     links.forEach(h => {
       Object.entries(h).forEach(([text, url]) => {
-        let a = document.createElement('a');
-        let href = document.createAttribute("href");
-        href.value = "file://"+url+"?project="+encodeURIComponent(project);
-        a.setAttributeNode(href);
-        let linktext = document.createTextNode(text);
-        a.appendChild(linktext);
-        navbar.insertBefore(sp.cloneNode(), navbar.firstChild);
-        navbar.insertBefore(a, navbar.firstChild);
+        let my_id = text.toLowerCase().replace(' ', '_')
+        let a = document.querySelector('#'+my_id)
+        let url_target = "file://"+url+"?project="+encodeURIComponent(project);
+        if (a) {
+            a.href=url_target;
+        }
+        else {
+          a = document.createElement('a');
+          let href = document.createAttribute("href");
+          href.value = url_target;
+          a.setAttributeNode(href);
+          let elem_id = document.createAttribute("id");
+          elem_id.value = my_id;
+          a.setAttributeNode(elem_id);
+          let linktext = document.createTextNode(text);
+          a.appendChild(linktext);
+          navbar.insertBefore(sp.cloneNode(), navbar.firstChild);
+          navbar.insertBefore(a, navbar.firstChild);
+          }
         })});
   }
 }

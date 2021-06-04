@@ -493,14 +493,14 @@ The following are required:
 
 external and internal will be familiar to any command-line users of ni: they're the same values you pass to it. Places you'd expect resources:
 
-- linux CLI package: /usr/local/share/inform7/Documentation (not named Resources)
-- gnome package: /usr/share/gnome-inform7/Resources
+- Linux CLI package: /usr/local/share/inform7/Documentation (not named Resources)
+- Gnome package: /usr/share/gnome-inform7/Resources
 - Mac OS: Inform/Inform.app/Contents/Resources 
 - Windows: "Program Files\Inform 7\Documentation"
 
 Places you'd expect docs:
 
-- gnome package: /usr/share/gnome-inform7/Documentation
+- Gnome package: /usr/share/gnome-inform7/Documentation
 - Mac OS: Inform/Inform.app/Contents/Resources/English.lproj
 - Windows: "Program Files\Inform 7\Documentation"
 
@@ -532,5 +532,5 @@ For background on Inform 7 compilation CLI options, see [How to use ni, inform6,
 
 ## License
 
-This project is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT, except for i7tohtml which is public domain.
+This project is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT), except for i7tohtml which is public domain.
 

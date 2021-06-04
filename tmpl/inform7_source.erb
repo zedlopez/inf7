@@ -4,7 +4,7 @@
 <script><%== Inf7::Template[:onejs].render %></script>
 <title><%= name ? name : "#{ext_name} by #{author}" %></title></head>
 <body class="inform7-source">
-<%== Inf7::Template[:index_navbar].render(index_root: index_root, build: build) %>
+<%== navbar %>
 <table class="source-table"><tbody>
 <%== Inf7::Template[:source_code_generic].render(lines: code, line_nos: line_nos) %>
 </tbody>
