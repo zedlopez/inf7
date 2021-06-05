@@ -1,5 +1,7 @@
 <!doctype html>
-<meta charset="utf-8"><html lang="en"><head><title><%= chapter.volume.title %> <%= chapter.num %>. <%= chapter.title %></title><link rel="stylesheet" href="style.css"><script src="one.js"></script></head><body><main>
+<meta charset="utf-8"><html lang="en"><head><title><%= chapter.volume.title %> <%= chapter.num %>. <%= chapter.title %></title><link rel="stylesheet" href="style.css"><script src="chapter.js"></script></head><body>
+<nav><%== Inf7::Template[:index_truncated].render %></nav>
+<main>
 <header>
 
 <div class="toc">

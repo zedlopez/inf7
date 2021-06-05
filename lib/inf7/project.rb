@@ -87,24 +87,14 @@ module Inf7
       end
     end
 
-    def self.write_partial(source_file, output_file, force: false, project: nil, **h)
-      #      source_file = source_file.to_s
-      extension = Inf7::Extension.new(source_file)
-      # TODO generic up_to_date ?
-      return File.read(output_file) if !force and File.exist?(output_file) and File.mtime(output_file) >= File.mtime(source_file)
-      FileUtils.mkdir_p(File.dirname(output_file))
-      i7tohtml = (project || self).check_executable(:i7tohtml)
-      doc, code, example_pasties = extension.get_doc_and_code(i7tohtml)
-      Inf7::Template.write(:source_code_partial, output_file, documentation: doc, code: code, example_pasties: example_pasties, **h)
-    end
-
     # TODO check up_to_date
     def self.smoketest(options)
+      puts 'smoketest'
       Optimist::die "Can't find #{options[:ext]}" unless File.exist?(options[:ext])
       Dir.mktmpdir do |tmpdir|
         project = Inf7::Project.new(tmpdir, {}.merge(options).merge( { top: true, allow_prior_existence: true, index: false, temp: true }))
         ext_obj = Inf7::Project.install({ext: options[:ext], project: project}, [])
-        Inf7::Template.write(:smoketest, project.story, ext: ext_obj.ext_name, author: ext_obj.author_dir)
+        Inf7::Source.new(project.story, content: Inf7::Template[:smoketest].render(ext: ext_obj.ext_name, author: ext_obj.author_dir)).write
         project.compile({ temp: true })
       end
     end
@@ -294,7 +284,7 @@ module Inf7
     def write_initial_index
       [ { file: File.join(@index_root, 'Index', 'Welcome.html'), head: 'Empty Index', text: 'Either this is a new project or the last compile was unsuccessful.' },
         { file: File.join(@build, 'problems.html'), head: 'No problem!', text: 'No compile has been attempted.' }, ].each do |h|
-        Inf7::Template.write(:generic_page, h[:file], **h)
+        Inf7::Doc.write(:generic_page, h[:file], **h)
       end
     end
     
@@ -376,20 +366,31 @@ module Inf7
     end
 
     def deform(string)
-      case string
+      beginning, anchor = string.match(/\A([^#]+)(#.*)?\Z/).captures
+      anchor ||= ""
+      result = case string
       when /index\.html/
-        "file://#{Inf7::Conf.doc}/index.html"
+        "file://#{Inf7::Conf.doc}/index.html?#{query_arg}#{anchor}"
       when /Extensions\/(Extensions|ExtIndex)\.html/
-        "file://#{@index_root}/doc/#{$1}.html"
+        "file://#{@index_root}/doc/#{$1}.html?#{query_arg}#{anchor}"
       when /^\/Extensions/
         target = CGI.unescape(string.sub(/\A\/Extensions\/Extensions\//,'')).downcase
         author, ext_name = target.split(%r{/})
         ext_name = File.basename(ext_name, '.html')
-        "file://#{@extension_locations[author.downcase][ext_name.downcase]}?#{query_arg}"
+        "file://#{@extension_locations[author.downcase][ext_name.downcase]}?#{query_arg}#{anchor}"
       when /(R?doc\d+\.html)/
-        "file://#{Inf7::Conf.doc}/#{Inf7::Doc.links.key?($1) ? [Inf7::Doc.links[$1][:file],Inf7::Doc.links[$1][:anchor]].join('#') : 'xyzzyplugh'}"
+        puts "#{string} #{$1}"
+        res = "file://#{Inf7::Conf.doc}/#{Inf7::Doc.links[$1][:file]}?#{query_arg}##{Inf7::Doc.links[$1][:anchor]}"
+#        res = "file://#{Inf7::Conf.doc}/#{Inf7::Doc.links.key?($1) ? [Inf7::Doc.links[$1][:file],Inf7::Doc.links[$1][:anchor]].join('#') : 'xyzzyplugh'}"
+#        res = [Inf7::Doc.links[$1][:file],Inf7::Doc.links[$1][:anchor]].join('#') 
+#        res = "#{Inf7::Doc.links[$1][:file]}?#{query_arg}##{Inf7::Doc.links[$1][:anchor]}"
+        puts res
+        res
       else
-        "file://#{Inf7::Conf.doc}/#{string}"
+        puts "fallback"
+        res ="file://#{Inf7::Conf.doc}/#{beginning}?#{query_arg}#{anchor}"
+        puts res
+        res
       end
     end
 
@@ -579,7 +580,10 @@ module Inf7
         make_source_html
       end
       if File.exist?(@build.join("Debug log.txt")) and up_to_date(@inf, @build.join("Debug log.txt"), override: true)
-        Inf7::Template.write(:navbar_page, @build.join('debug_log.html'), navbar: @navbar, name: "#{@name} Debug Log", head: "Debug Log for #{@name}", subhead: "Generated #{Time.now}", text: File.read(@build.join('Debug log.txt')).gsub(/#{$/}#{$/}+/,$/*2).gsub(%r{#{$/}}, "<br>"))
+
+
+        Inf7::Page.new.write(@build.join('debug_log.html'), content: File.read(@build.join('Debug log.txt')).gsub(/#{$/}#{$/}+/,$/*2).gsub(%r{#{$/}}, "<br>"), title: "#{@name} Debug Log", navbar: @navbar)
+        
       end
       if rc.exitstatus and rc.exitstatus.zero? # on SIGSEGV exitstatus is nil
         update_extension_docs(temp: options[:temp])

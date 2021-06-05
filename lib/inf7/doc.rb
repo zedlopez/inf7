@@ -109,6 +109,7 @@ module Inf7
 
       def write_template_files
         { copycode: 'copycode.js',
+          chapterjs: 'chapter.js',
           style: 'style.css',
           onejs: 'one.js' }.each_pair do |template, file|
           Inf7::Template.write(template, File.join(Inf7::Conf.doc, file))

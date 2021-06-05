@@ -1,26 +1,40 @@
-function add_bar() {
+function add_bar(update) {
+console.log('add_bar');
   let urlParams = new URLSearchParams(window.location.search);
   let navbar = document.querySelector('div.index-navbar');
+  if (urlParams.has('project')) { console.log(decodeURIComponent(urlParams.get('project'))); }
+
 
   if (navbar && urlParams.has('project')) {
+  console.log("we're in");
     navbar.setAttribute('class', 'index-navbar'); // removes hidden
     let project = decodeURIComponent(urlParams.get('project'));
     let index_root = project + '/.index/';
     let build = project + '/Build/';
+    let query_arg = "?project="+encodeURIComponent(project);
 
-    let links = [ { "Extensions": index_root + 'doc/Extensions.html' },
+    let links = [
+{ "General Index": document.getElementById('general_index').href },
+{ "Docs": document.getElementById('docs').href },
+{ "Extensions": index_root + 'doc/Extensions.html' },
                   { "Debug Log": build + 'debug_log.html' },
                   { "Problems": build + 'problems.html' },
                   { "Source": index_root + 'story.html' },
                   { "Project Index": index_root + 'Index/Welcome.html' } ];
                   let sp = document.createTextNode(" ");
     links.forEach(h => {
+    console.log(h);
       Object.entries(h).forEach(([text, url]) => {
-        let my_id = text.toLowerCase().replace(' ', '_')
-        let a = document.querySelector('#'+my_id)
-        let url_target = "file://"+url+"?project="+encodeURIComponent(project);
+      console.log(text, url);
+        let my_id = text.toLowerCase().replace(' ', '_');
+        let a = document.querySelector('#'+my_id);
+        let url_target = "file://"+url+query_arg;
         if (a) {
-            a.href=url_target;
+          let parts = a.href.split('#');
+                  let qparts = parts[0].split('?');
+                  a.href = qparts[0] + '?' + (qparts[1] ? qparts[1] : query_arg) + (parts[1] ? ('#' + parts[1]) : "");
+/*           a.href = parts[0] + query_arg + (parts[1] ? ('#' + parts[1]) : ""); */
+
         }
         else {
           a = document.createElement('a');
@@ -36,7 +50,16 @@ function add_bar() {
           navbar.insertBefore(a, navbar.firstChild);
           }
         })});
+        if (update) {
+        console.log('in update');
+          let main_links = document.querySelectorAll('main a');
+          main_links.forEach(a => {
+          if (!a.href.startsWith('javascript')) {
+          let parts = a.href.split('#')
+          a.href = parts[0] + query_arg + (parts[1] ? ('#' + parts[1]) : "");
+} } );
+        }
+        
   }
 }
 
-document.addEventListener("DOMContentLoaded", add_bar);

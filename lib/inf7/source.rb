@@ -4,20 +4,19 @@ require 'pp'
 module Inf7
   class Source
 
-    def contents
-      @contents ||= File.read(@filename)
+    def content
+      @content ||= File.read(@filename)
     end
 
     def lines
-      contents.split($/)
+      content.split($/)
     end
 
     def preprocess
 
     end
     
-    
-    def pretty_print(i7tohtml, string: contents)
+    def pretty_print(i7tohtml, string: content)
       return string.split($/) unless i7tohtml
       stdout, stderr, rc = Open3.capture3(i7tohtml, @filename, :stdin_data => string)
       if rc.exitstatus and rc.exitstatus.zero? # on SIGSEGV exitstatus is nil
@@ -30,11 +29,19 @@ module Inf7
       end
       return result
     end
+
     
-    def initialize(filename)
+    # does not test for existence
+    def initialize(filename, content: nil)
       @pathname = Pathname.new(filename)
       @filename = @pathname.expand_path.to_s
+      @content = content if content
       return true
+    end
+
+    def write(destination = @filename)
+      raise RuntimeError.new("Can't write source with no content") unless @content
+      File.open(destination, 'w') {|f| f.write(@content) }
     end
 
     def with_suffix(suffix, mode, downcase: false)
