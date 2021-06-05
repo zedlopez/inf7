@@ -1,8 +1,11 @@
-0.2.0 census command
+0.2.0
+      
+      pp command, and improved formatting
+      census command, and more sensible updating choices
       update command
       reduce the waste of time and space of rebuilding all extensions on per project basis
       if configured, launch browser on problems for unsuccessful compile
-      if configured, launch terp on game on successful compile
+      play command and if configured, launch terp on game on successful compile
 0.1.6 add --download option to setup
       Make links of docs' internal references to things of the form "previous/next chapter", "Chapter 3", "Activities Chapter", "Chapter on Actions"
       Inserting appropriate copyCode links for extension examples and, at top, for "Include <extension>"

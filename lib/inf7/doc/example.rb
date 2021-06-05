@@ -67,8 +67,8 @@ module Inf7
         @payload = []
         content.gsub!(/"javascript:pasteCode\('([^']+)'\)"/) do |m|
           fixed =  Inf7::Doc.fix_javascript($1)
-          %Q{"javascript:copyCode(`#{fixed}`)"}
           @payload << fixed
+          %Q{"javascript:copyCode(`#{fixed}`)"}
         end
         @full = {}
         @node = Nokogiri::HTML::DocumentFragment.parse(content)

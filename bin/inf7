@@ -18,8 +18,8 @@ class Inf
                "clean" => "Clean a project's build output",
                "census" => "Take extension census",
                "update" => "Update project's extensions from those in config",
-               "play" => "Play a game file, per gterp/zterp setting"
-               
+               "play" => "Play a game file, per gterp/zterp setting",
+               "pp" => "Pretty print a source file"
              }
   
   attr_reader :main_opts, :command, :subopts
@@ -269,18 +269,20 @@ class Inf
       opt :ni, "Location of ni", type: :string, short: :none
       opt :inform6, "Location of inform6", type: :string, short: :none
       opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
+      opt :verbose, "Verbose compilation output", default: false, short: '-v'
     end
     Inf7::Project.smoketest(@subopts.reject {|k,v| v.nil?})
   end
 
   def opt_census
     @subopts = Optimist::options do
-      banner "Extension census what's your mention"
+      banner "Take extension census"
       opt :internal, "Inform internal directory", type: :string, short: :none
       opt :external, "Inform external directory", type: :string, short: :none
       opt :ni, "Location of ni", type: :string, short: :none
       opt :quiet, "Quiet (no output other than errors)", default: false, short: '-q'
       opt :force, "Always rewrite, ignoring modification time", default: false, short: :none
+      opt :verbose, "Verbose compilation output", default: false, short: '-v'
     end
     Inf7::Project.census(@subopts.reject {|k,v| v.nil?})
   end
@@ -299,6 +301,13 @@ class Inf
     Inf7::Project[ARGV].play
   end
 
+  def opt_pp
+    @subopts = Optimist::options do
+      banner "Pretty-print an Inform 7 source file"
+      opt :html, "HTML output", default: false
+    end
+    Inf7::Source.pretty_print(ARGV.shift, @subopts)
+  end
   
 end
 

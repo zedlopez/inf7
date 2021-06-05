@@ -32,7 +32,7 @@ console.log('add_bar');
         if (a) {
           let parts = a.href.split('#');
                   let qparts = parts[0].split('?');
-                  a.href = qparts[0] + '?' + (qparts[1] ? qparts[1] : query_arg) + (parts[1] ? ('#' + parts[1]) : "");
+                  a.href = qparts[0] +  (qparts[1] ? ('?' + qparts[1]) : query_arg) + (parts[1] ? ('#' + parts[1]) : "");
 /*           a.href = parts[0] + query_arg + (parts[1] ? ('#' + parts[1]) : ""); */
 
         }

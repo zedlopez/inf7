@@ -33,7 +33,11 @@ Completed: wrote blorb file of size 642210 bytes (1 picture(s), 0 sound(s))
 
 You can specify the project directory by absolute or relative path; if you omit '.inform' from the end, as above, inf7 will automatically add it. As demonstrated above, the default output is terser than the commands' native output. You can get the undiluted output instead with the compile subcommand's ``--verbose`` flag (or suppress non-error output altogether with ``--quiet``).
 
-After a successful compilation, you could run A Walk in the Park.inform/Build/output.ulx (or output.gblorb) in an interpreter, or open 'A Walk in the Park.inform/index.html' in your browser to see the Project Index. 
+If 'browser' is defined for the project or in the user-conf, then on unsuccessful compilations, that browser is automatically launched displaying the project's problems.html.
+
+On a successful compilation, if it's a glulx project and 'gterp' is defined (or if it's a z-code project and 'zterp' is defined), it'll launch that.
+
+Otherwise, after a successful compilation, you could run A Walk in the Park.inform/Build/output.ulx (or output.gblorb) in an interpreter, or open 'A Walk in the Park.inform/index.html' in your browser to see the Project Index. 
 
 ```
 $ firefox "A Walk in the Park.inform/index.html"
@@ -74,6 +78,8 @@ Commands:
   clean      Clean a project's build output
   census     Take extension census
   update     Update project's extensions from those in config
+  play       Play a game file, per gterp/zterp setting
+  pp         Pretty print a source file
 ```
 
 You can also ask for help on any of the subcommands. ``--help`` must come _after_ the subcommand.
@@ -214,10 +220,6 @@ $ inf7
 [elided]
 ```
 
-TODO notes about compilation, --force, and project index / extension pages
-
-As seen above, inf7 defaults to not generating files if their source files haven't been changed. If you want to recompile regardless of modification time, you can specify the ``--force`` parameter.
-
 Other relevant parameters:
 
 - --nobble-rng disable pseudorandomness (use ni's --rng parameter)
@@ -242,6 +244,9 @@ Other relevant parameters:
 and which is used depends on whether you specify --release.
 
 There's an important difference between how i6flags and i7flags work. i7flags is additive, but if you specify i6flags you must specify all the i6flags you want to apply to the run: what you specify _replaces_ the defaults. Note that you really don't want to use ~D in i6flagstest and you really, really don't want to use -D or -S in i6flagsrelease, but inf7 won't stop you if that's what you ask for.
+
+When you compile a project, inf7 rebuilds its html pages for the extensions under the projects materials directory if any have changed. If you specify --force it updates them all regardless of file modification times. It does not update the html pages for the external or internal directories; see the census subcommand.
+
 
 ### Compiling without a project
 
@@ -453,6 +458,10 @@ If you feel like having this level of denial, it can be yours with:
 $ inf7 fake --name a_walk_in_the_park "A Walk in the Park"
 ```
 
+## Census
+
+The census subcommand performs an extension census (i.e., updates the External directory's Documentation folder) and inf7 generates its own HTML versions of any extensions that haven't been seen before or have been updated. With the --force option, it does all of them regardless of file modification time. This will be slow if you have a lot of extensions in your external dir.
+
 ## Smoke testing an extension
 
 The test subcommand has an ``--ext`` flag that takes an extension. It creates a temporary project with a story file that includes the extension and tries compiling it. It takes most of the same parameters as init; in particular, be sure that ``--external`` is set appropriately for dependencies to be found.
@@ -475,6 +484,29 @@ If you want to keep some things, use the --except flag, which can take multiple 
 ```
 $ inf7 clean --except A\ Walk\ in\ the\ Park/Build/output.ulx A\ Walk\ in\ the\ Park/problems.html  A\ Walk\ in\ the\ Park 
 ```
+
+## Pretty-printing
+
+The pp subcommand can be directly passed a source or extension filename and outputs a formatted version.
+
+```
+$ inf7 pp Emily\ Short/Basic\ Help\ Menu.i7x
+Basic Help Menu by Emily Short begins here.
+
+"Provides a HELP command which brings up a menu giving standard instructions about IF."
+
+Use authorial modesty.
+
+Include Menus by Emily Short.
+
+Table of Basic Help Options
+title                                          subtable (a table name)                     description                                                        toggle (a rule)
+"Introduction to [story title]"                --                                          "This is a simple demonstration [story genre] game."               --
+"Instructions for Play"                        Table of Instruction Options                --                                                                 --
+[...]
+```
+
+It defaults to plain text, but with the --html option it outputs the source the same way inf7 does when it makes pages. (This may not be that useful given its references to inf7's own css.) This is just for show and shouldn't be used to generate source you intend to work with: it destroys all tabs.
 
 ## Setup from an existing installation
 

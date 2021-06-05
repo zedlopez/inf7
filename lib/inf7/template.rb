@@ -39,14 +39,14 @@ module Inf7
     end
 
     def initialize(template)
-      puts "making template #{template}"
+#      puts "making template #{template}"
       raise ArgumentError.new("Must specify non-empty string") unless template and !template.empty?
       @template = template
       @erubi = Erubi::Engine.new(Inf7::Template.read(@template), escape: true)
     end
 
     def render(**hash)
-      puts "Rendering template"
+#      puts "Rendering template"
       context = OpenStruct.new(hash).instance_eval { binding }
       eval(@erubi.src, context)
     end

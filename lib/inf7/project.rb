@@ -61,7 +61,7 @@ module Inf7
     def self.set(options)
       filename = File.join(Inf7::Conf.dir, 'inf7.yml')
       Optimist::die("User settings don't exist; run setup") unless File.exist?(filename)
-      conf = YAML.load(File.read(filename)).merge(options.reject {|k| !Inf7::Project::Fields.member?(k)})
+      conf = Inf7::Conf.absolutify(YAML.load(File.read(filename)).merge(options.reject {|k| !Inf7::Project::Fields.member?(k)}))
       File.open(filename, 'w') {|f| f.write(YAML.dump(conf)) }
     end
     
@@ -83,7 +83,7 @@ module Inf7
     def self.census(options)
       Dir.mktmpdir do |tmpdir|
         project = Inf7::Project.new(tmpdir, options.merge( { top: true, allow_prior_existence: true }))
-        project.census(temp: true)
+        project.census(temp: true, **options)
       end
     end
 
@@ -148,7 +148,8 @@ module Inf7
       return ext_obj
     end
 
-    def census
+    def census(temp: false, **options)
+      @verbose = true if options[:verbose]
       ni = check_executable(:ni)
       if ni
         args = [ '--noprogress', '--internal', opt(:internal), '--external', opt(:external), '--census' ]
@@ -156,7 +157,7 @@ module Inf7
         stdout, stderr, rc = Open3.capture3(ni, *args)
         if rc.exitstatus.zero?
           report stdout unless opt(:quiet)
-          project.update_extension_docs(temp: true)
+          update_extension_docs(temp: temp, census: true, **options) # passes on --force if present
         else
           STDERR.puts(stderr)
         end
@@ -169,14 +170,15 @@ module Inf7
       write_rc
     end      
 
-    def update_extension_docs(temp: false)
+    def update_extension_docs(temp: false, census: false, **options)
+      @conf[:force] = true if options[:force]
       i7tohtml = check_executable(:i7tohtml)
-      ext_dirs =  [ opt(:external), File.join(opt(:internal), 'Extensions') ]
+#      ext_dirs =  [ opt(:external), File.join(opt(:internal), 'Extensions') ]
       project_ext_doc_dir = File.join(@index_root, 'doc')
-
-      ext_dirs = temp ? {} : { @extensions_dir => project_ext_doc_dir }
-      ext_dirs[opt(:external)] = Inf7::Conf.ext
-      ext_dirs[File.join(opt(:internal), 'Extensions')] = Inf7::Conf.ext
+      ext_dirs = {}
+      ext_dirs[@extensions_dir] = project_ext_doc_dir if !temp and !census
+      ext_dirs[opt(:external)] = Inf7::Conf.ext if census
+      ext_dirs[File.join(opt(:internal), 'Extensions')] = Inf7::Conf.ext if census
       @extension_locations = Hash.new {|h,k| h[k] = {} }
       ext_dirs.each_pair do |ext_dir, ext_doc_dir|
         Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
@@ -284,7 +286,7 @@ module Inf7
     def write_initial_index
       [ { file: File.join(@index_root, 'Index', 'Welcome.html'), head: 'Empty Index', text: 'Either this is a new project or the last compile was unsuccessful.' },
         { file: File.join(@build, 'problems.html'), head: 'No problem!', text: 'No compile has been attempted.' }, ].each do |h|
-        Inf7::Doc.write(:generic_page, h[:file], **h)
+        Inf7::Page.write(:generic_page, h[:file], **h)
       end
     end
     
@@ -332,8 +334,8 @@ module Inf7
       Inf7::Template.write(:story, @story, project: self) unless File.exist?(@story)
     end
 
-    def i6flag
-      Inf7::FormatStuff[opt(:format)][:i6flag]
+    def i6flag(options={})
+      Inf7::FormatStuff[options[:format] || opt(:format)][:i6flag]
     end
     
     def output
@@ -379,17 +381,15 @@ module Inf7
         ext_name = File.basename(ext_name, '.html')
         "file://#{@extension_locations[author.downcase][ext_name.downcase]}?#{query_arg}#{anchor}"
       when /(R?doc\d+\.html)/
-        puts "#{string} #{$1}"
+#        puts "#{string} #{$1}"
         res = "file://#{Inf7::Conf.doc}/#{Inf7::Doc.links[$1][:file]}?#{query_arg}##{Inf7::Doc.links[$1][:anchor]}"
 #        res = "file://#{Inf7::Conf.doc}/#{Inf7::Doc.links.key?($1) ? [Inf7::Doc.links[$1][:file],Inf7::Doc.links[$1][:anchor]].join('#') : 'xyzzyplugh'}"
 #        res = [Inf7::Doc.links[$1][:file],Inf7::Doc.links[$1][:anchor]].join('#') 
 #        res = "#{Inf7::Doc.links[$1][:file]}?#{query_arg}##{Inf7::Doc.links[$1][:anchor]}"
-        puts res
         res
       else
-        puts "fallback"
         res ="file://#{Inf7::Conf.doc}/#{beginning}?#{query_arg}#{anchor}"
-        puts res
+#        puts res
         res
       end
     end
@@ -443,9 +443,9 @@ module Inf7
     end
 
     def play(options={})
-          if opt(:zterp) and ('zcode' == opt(:format))
+          if opt(:zterp) and (('zcode' == options[:format]) || ('zcode' == opt(:format)))
             system(opt(:zterp), (!options[:temp] && up_to_date(blorb, output, override: true)) ? blorb : output)
-          elsif opt(:gterp) and ('glulx' == opt(:format))
+          elsif opt(:gterp) and (('glulx' == options[:format]) || ('glulx' == opt(:format)))
             system(opt(:gterp), (!options[:temp] && up_to_date(blorb, output, override: true)) ? blorb : output)
           end
     end
@@ -555,6 +555,7 @@ module Inf7
     end
 
     def compile_ni(options)
+      @conf[:format] = options[:format] if options[:format]
       ni = check_executable_or_die(:ni)
       @conf[:force] ||= options[:force]
       @verbose ||= options[:verbose]
@@ -565,7 +566,7 @@ module Inf7
       { nobble_rng: :rng, release: :release }.each_pair {|k,v| arg_list << "--#{v}" if opt(k) }
       %i{ index progress }.each {|s| arg_list << "--no#{s}" if !opt(s) }
       arg_list += [ '--internal', opt(:internal), '--external', opt(:external), '--project', dir.to_s ]
-      arg_list << "--format=v8" if (options[:format] == 'zcode') or (opt(:format) == 'zcode')
+      arg_list << "--format=z8" if (options[:format] == 'zcode') or (opt(:format) == 'zcode')
       report ([ni]+arg_list).join(' ')
       FileUtils.mkdir_p(opt(:external))
       stdout, stderr, rc = Open3.capture3(ni, *arg_list)
@@ -609,8 +610,8 @@ module Inf7
       report # output newline
       i6flags_arg = options[:i6flags] ? options[:i6flags] : (options[:release] ? opt(:i6flagsrelease) : opt(:i6flagstest))
         inform6 = check_executable_or_die(:inform6)
-        report "#{inform6} #{i6flags_arg}#{i6flag} #{inf} #{output}"
-        stdout, stderr, rc = Open3.capture3(inform6, "#{i6flags_arg}#{i6flag}", inf.to_s, output.to_s)
+        report "#{inform6} #{i6flags_arg}#{i6flag(options)} #{inf} #{output}"
+        stdout, stderr, rc = Open3.capture3(inform6, "#{i6flags_arg}#{i6flag(options)}", inf.to_s, output.to_s)
         if rc.exitstatus and rc.exitstatus.zero?
           report @verbose ? stdout : stdout.split($/).select {|l| l.match(/\A(Inform|In:|Out:)/) }.join("\n")
         else

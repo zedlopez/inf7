@@ -8,8 +8,9 @@
   <% if line.match(/\A(\s*)(<[^>]+>)?(\s+)(\S.*)\Z/) %>
     <% leading_whitespace, initial_tag, initial_whitespace, rest = $1, $2, $3, $4 %>
     <% initial_whitespace = initial_whitespace + (leading_whitespace || "") %>
+    <% initial_whitespace.gsub!(/\t/, '   ') %>
     <% initial_whitespace = ' ' + '&ensp;' * (initial_whitespace.length - 1) %>
-    <% line = (initial_tag || "") + initial_whitespace + rest %>
+    <% line = (initial_tag || "") + initial_whitespace + rest.gsub(/\t+/,"\t") %>
   <% end %>
   <% if in_table -%>
     <% if !line.match(/\A(\s|&ensp)*\Z/) and !line.match(/with\s+(?:\d+\s+)?blank\s+row/) -%>

@@ -1,7 +1,7 @@
 module Inf7
   class Extension < Source
 
-    attr_accessor :author_dir, :ext_name, :filename, :documentation, :code, :example_pasties, :extension_dir
+    attr_accessor :author_dir, :ext_name, :filename, :extension_dir
     def initialize(filename)
       super(filename)
       through_auth, ext_name = @pathname.split
@@ -11,6 +11,20 @@ module Inf7
       @ext_name = ext_name.to_s.gsub(/\..*\Z/,'')
     end
 
+    def documentation
+      get_doc_and_code unless @documentation
+      @documentation
+    end
+
+    def code
+      get_doc_and_code unless @code
+      @code
+    end
+
+    def example_pasties
+      get_doc_and_code unless @example_pasties
+      @example_pasties
+    end
     def name
       "#{@ext_name} by #{@author_dir}"
     end
@@ -26,6 +40,10 @@ module Inf7
       Inf7::Template.write(:extension_source, formatted_path(dest_dir_root), ext: self)
     end
 
+    def pp_html
+      Inf7::Template[:extension_source].render(ext: self)
+    end
+    
     def i7x(mode, downcase: false)
       with_suffix(:i7x, mode, downcase: downcase)
     end
@@ -34,13 +52,16 @@ module Inf7
       with_suffix(:html, mode, downcase: downcase)
     end
 
-    
-    
-    def get_doc_and_code(i7tohtml)
+#    def pretty_print(i7tohtml = nil)
+#      super(i7tohtml, source_lines: documentation + code)
+#    end
+      
+    def get_doc_and_code(i7tohtml = nil)
+      i7tohtml ||= Inf7::Source.check_executable(Inf7::Conf.conf[:i7tohtml])
       in_doc = false
       in_example = false
       example_pasties = []
-      prepped = []
+
       lines.each do |line|
         in_doc = true if line.strip.match(/----\s+documentation\s+----/i)
         if in_doc and line.match(/\A\s*\*:(.*)\Z/)
@@ -53,13 +74,9 @@ module Inf7
             example_pasties.last << line
           end
         end
-        if line.match(/\A(\s+)(.*)\Z/)
-          whitespace, remainder = $1, $2
-          line = whitespace.gsub(/\t/, '   ') + remainder.rstrip
-        end
-        prepped << line.gsub(/\t+/,"\t")
       end
-      pp_lines = pretty_print(i7tohtml, string: prepped.join($/))
+      pp_lines = pretty_print(i7tohtml)
+
       results = { doc: [], code: [] }
       in_doc = false
       pp_lines.each do |line|

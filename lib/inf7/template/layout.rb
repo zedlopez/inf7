@@ -14,12 +14,12 @@ module Inf7
     end
       
     def initialize(template)
-      puts "making layout #{template}"
+#      puts "making layout #{template}"
         super(File.join('layout', template.to_s))
       end
 
     def render(**hash)
-      puts "rendering layout"
+#      puts "rendering layout"
         super(**(hash.merge(layout: nil)))
       end
 
