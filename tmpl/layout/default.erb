@@ -1,0 +1,5 @@
+<!doctype html>
+<meta charset="utf-8"><html lang="en"><head><title><%= title or Inf7::Appname %></title><link rel="stylesheet" href="<%== style or "file://#{Inf7::Conf.doc}/style.css" %>"><script src="<%= js or main %>.js"></script></head><body><main>
+<%== navbar if navbar %>
+<%== content %>
+</main></body></html>
