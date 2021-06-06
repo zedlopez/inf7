@@ -22,12 +22,12 @@ $ inf7 compile A\ Walk\ in\ the\ Park
 Compiled 23-word source.
 
 /usr/local/bin/inform6 -wE2SDG /home/zed/inform/A Walk in the Park.inform/Build/auto.inf /home/zed/inform/A Walk in the Park.inform/Build/output.ulx
-Inform 6.35 for Linux (21nd May 2021)
+Inform 6.35 for Linux (22nd May 2021)
 In:  1 source code files             66296 syntactic lines
 Out:   Glulx story file 1.210503 (537.5K long):
 
 /usr/local/bin/cBlorb -unix /home/zed/inform/A Walk in the Park.inform/Release.blurb /home/zed/inform/A Walk in the Park.inform/Build/output.gblorb
-cBlorb 1.2 [executing on Monday 3 May 2021 at 13:44.58]
+cBlorb 1.2 [executing on Monday 31 May 2021 at 13:44.58]
 Completed: wrote blorb file of size 642210 bytes (1 picture(s), 0 sound(s))
 ```
 
@@ -419,12 +419,12 @@ $ inf7
 Compiled 18-word source.
 
 /usr/local/bin/inform6 -wE2SDG /home/zed/inform/A Walk in the Park.inform/Build/auto.inf /home/zed/inform/A Walk in the Park.inform/Build/output.ulx
-Inform 6.35 for Linux (21nd May 2021)
+Inform 6.35 for Linux (22nd May 2021)
 In:  1 source code files             66292 syntactic lines
 Out:   Glulx story file 1.210506 (537.5K long):
 
 /usr/local/bin/cBlorb -unix /home/zed/inform/A Walk in the Park.inform/Release.blurb /home/zed/inform/A Walk in the Park.inform/Build/output.gblorb
-cBlorb 1.2 [executing on Thursday 6 May 2021 at 11:06.18]
+cBlorb 1.2 [executing on Thursday 3 June 2021 at 11:06.18]
 Completed: wrote blorb file of size 642210 bytes (1 picture(s), 0 sound(s))
 $ ls -1
 a_walk_in_the_park.gblorb
