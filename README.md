@@ -22,7 +22,7 @@ $ inf7 compile A\ Walk\ in\ the\ Park
 Compiled 23-word source.
 
 /usr/local/bin/inform6 -wE2SDG /home/zed/inform/A Walk in the Park.inform/Build/auto.inf /home/zed/inform/A Walk in the Park.inform/Build/output.ulx
-Inform 6.34 for Linux (21st May 2020)
+Inform 6.35 for Linux (21nd May 2021)
 In:  1 source code files             66296 syntactic lines
 Out:   Glulx story file 1.210503 (537.5K long):
 
@@ -245,6 +245,8 @@ and which is used depends on whether you specify --release.
 
 There's an important difference between how i6flags and i7flags work. i7flags is additive, but if you specify i6flags you must specify all the i6flags you want to apply to the run: what you specify _replaces_ the defaults. Note that you really don't want to use ~D in i6flagstest and you really, really don't want to use -D or -S in i6flagsrelease, but inf7 won't stop you if that's what you ask for.
 
+Don't add --release to i7flagstest or i7flagsrelease; just specify it on the command-line when desired. inf7 doesn't stop you from assigning ~D to i6flagstest or -D to i6flagsrelease; if you're explicitly asking for screwy results you can get them.
+
 When you compile a project, inf7 rebuilds its html pages for the extensions under the projects materials directory if any have changed. If you specify --force it updates them all regardless of file modification times. It does not update the html pages for the external or internal directories; see the census subcommand.
 
 
@@ -417,7 +419,7 @@ $ inf7
 Compiled 18-word source.
 
 /usr/local/bin/inform6 -wE2SDG /home/zed/inform/A Walk in the Park.inform/Build/auto.inf /home/zed/inform/A Walk in the Park.inform/Build/output.ulx
-Inform 6.34 for Linux (21st May 2020)
+Inform 6.35 for Linux (21nd May 2021)
 In:  1 source code files             66292 syntactic lines
 Out:   Glulx story file 1.210506 (537.5K long):
 

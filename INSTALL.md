@@ -11,7 +11,7 @@ $ git clone https://github.com/zedlopez/inf7.git
 $ cd inf7
 $ export GEM_HOME="$HOME/gems"
 $ gem build inf7.gemspec
-$ gem install inf7-0.1.6.gem
+$ gem install inf7-0.2.0.gem
 $ cp inf7.sh "$HOME/bin/inf7"
 ```
 
@@ -25,7 +25,7 @@ $ virtualenv --python=python3 pygments
 $ cd pygments
 $ source bin/activate
 $ pip install pygments
-$ cp $GEM_HOME/gems/inf7-0.1.6/i7tohtml bin
+$ cp $GEM_HOME/gems/inf7-0.2.0/i7tohtml bin
 ```
 
 And then set i7tohtml to $HOME/pygments/bin/i7tohtml (but use the absolute pathname, not something with $HOME).
