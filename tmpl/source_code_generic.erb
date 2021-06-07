@@ -10,8 +10,9 @@
     <% initial_whitespace = initial_whitespace + (leading_whitespace || "") %>
     <% initial_whitespace.gsub!(/\t/, '   ') %>
     <% initial_whitespace = ' ' + '&ensp;' * (initial_whitespace.length - 1) %>
-    <% line = (initial_tag || "") + initial_whitespace + rest.gsub(/\t+/,"\t") %>
+    <% line = (initial_tag || "") + initial_whitespace + rest %>
   <% end %>
+  <% line = line.gsub(/\t+/,"\t") %>
   <% if in_table -%>
     <% if !line.match(/\A(\s|&ensp)*\Z/) and !line.match(/with\s+(?:\d+\s+)?blank\s+row/) -%>
       <tr><% if line_nos -%><td class="line-number"><%= j %><% else -%><td>&ensp;<% end -%></td><td class="line"<% if line_nos %> id="line<%= j %>"<% end %>><%== line.gsub(/\t/, "</td><td>") %></td></tr>
