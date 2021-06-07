@@ -305,6 +305,7 @@ class Inf
     @subopts = Optimist::options do
       banner "Pretty-print an Inform 7 source file"
       opt :html, "HTML output", default: false
+      opt :width, "For text, number of columns", type: :integer
     end
     Inf7::Source.pretty_print(ARGV.shift, @subopts)
   end
