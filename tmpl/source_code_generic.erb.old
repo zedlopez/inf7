@@ -1,3 +1,4 @@
+<div class="inform7-source">
 <% in_table = false -%>
 <% lines.each.with_index(1) do |line, j| %>
   <% line = line.rstrip %>
@@ -10,22 +11,22 @@
     <% initial_whitespace = initial_whitespace + (leading_whitespace || "") %>
     <% initial_whitespace.gsub!(/\t/, '   ') %>
     <% initial_whitespace = ' ' + '&ensp;' * (initial_whitespace.length - 1) %>
-    <% line = (initial_tag || "") + initial_whitespace + rest %>
+    <% line = (initial_tag || "") + initial_whitespace + rest.gsub(/\t+/,"\t") %>
   <% end %>
-  <% line = line.gsub(/\t+/,"\t") %>
   <% if in_table -%>
     <% if !line.match(/\A(\s|&ensp)*\Z/) and !line.match(/with\s+(?:\d+\s+)?blank\s+row/) -%>
-      <span class="tr"><span class="th<% if line_nos %> line_no" id="line<%= j %><% end %>"></span><span class="td line"><%== line.sub(/\A(\s|&ensp;)*/,'').gsub(/\t/, %Q{</span><span class="td">}) %></span></span>
+      <tr><td <% if line_nos %>class="line line-number" id="line<%= j %>"<% end %>><%== line.gsub(/\t/, "</td><td>") %></td></tr>
     <% else -%>
       <% in_table = false -%>
-      </div></div><div class="pseudo"><span class="tr"><span class="th<% if line_nos %> line_no" id="line<%= j %><% end %>"></span><span class="td line"><%== line.empty? ? '&ensp;' : line %></span></span>
+      </tbody></table><% if line_nos %><span class="line" id="line<%= j %>"><% end %><%== line %><% if line_nos %></span><% end %><br>
     <% end -%>
   <% else -%>
     <% if line.match(/\A(?:<[^>]+>)?(\s|&ensp;)*Table\s+(?:of|\d+(?:\.\d+)?)\b/) %>
       <% in_table = true -%>
-      <span class="tr tablehead"><span class="th<% if line_nos %> line_no" id="line<%= j %><% end %>"></span><span class="td line"><%== line.empty? ? '&ensp;' : line %></span></span></div><div class="pseudo tabletable">
+      <tr><td class="line"<% if line_nos %> class="line line-number" id="line<%= j %>"<% end %>><%== line %></td></tr></table><table class="source-table"><tbody>
     <% else -%>
-      <span class="tr"><span class="th<% if line_nos %> line_no" id="line<%= j %><% end %>"></span><span class="td line"><%== line.empty? ? '&ensp;' : line %></span></span>
+      <span class="line<% if line_nos %> line-number" id="line<%= j %><% end %>"><%== line %></span><br>
     <% end -%>
   <% end -%>
 <% end -%>
+</div>

@@ -24,60 +24,33 @@ div > p.in2 { display: none; }
 .the_transformed td > p { height: inherit; }
 .the_transformed div.smallbox { height: 3rem; }
 .the_transformed div.smallbox a.symbol { font-size: 1.33rem; font-weight: bold; }
-/* td.line-number { font-family: monospace; background: #E6E6E6; padding-right: .75rem; text-align: right; }
-td.line { padding-left: 1rem; }
-*/
-.inform7-source   {  counter-reset: linenum; margin-top: 3rem; }
 
-footer { margin-top: 2rem; margin-bottom: 2rem; }
+div.inform7-source { counter-reset: line_num; } /* background-color: #E6E6E6; }*/
 
-div.pseudo; {
-    display: table;
-    table-layout: fixed;
-    width: 100%; /* anything but auto, otherwise fixed layout not guaranteed */
-    white-space: pre-wrap;
+.line {
+  text-align: left;
+  margin-left: 6rem;
+  table-layout: fixed;
+  white-space: pre-wrap;
+  }
+.line::before {
+  display: inline-block;
+  width: 6rem;
+  margin-left: -6rem;
+padding-left: auto;
+  margin-left: auto;
+  text-align: right;
+  }
+
+span.line-number::before {
+  text-align: right;
+  font-family: monospace;
+  content: counter(line_num) "  ";
+
 }
-
-div.pseudo span.tr {
-    display: table-row;
-    counter-increment: linenum;
-}
-div.pseudo span.th {
-    display: table-cell;
-    user-select: none;
-    -moz-user-select: none;
-    -webkit-user-select: none;
-    padding-right: .5rem;
-    margin-right: .5rem;
-    width: 3rem; /* or whatever the desired width of the numbers column is */
-}
-div.pseudo span.line_no::before {
-    content: counter(linenum);
-    text-align: right;
-    display: block;
-    font-family: monospace;
-    font-weight: normal;
-}
-div.pseudo span.th {
-}
-
-div.pseudo span.td {
-    display: table-cell;
-    padding-left: .5rem;
-    padding-right: .5rem;
-    }
-
-div.tabletable {
-border-collapse: collapse;
-}
-
-div.tabletable span.td
-{    border: .1rem solid black;
-border-collapse: collapse;
-}
-
-span.tablehead { font-weight: bold; }
-
+.line-number { counter-increment: line_num;  }
+/*span.line-number { font-family: monospace; background: #E6E6E6; padding-right: .75rem; text-align: right; 
+td.line { padding-left: 1rem; }*/
 .index-navbar { font-family: "Public Sans", Arial, Helvetica, sans-serif; font-size: 1.33rem; font-weight: bold; margin-left: 2rem; margin-top: 1rem; margin-bottom: 1rem; }
 .index-navbar a { padding-right: .75rem; text-decoration: none; }
 table.source-table { border-collapse: collapse; font-family: 'Public Sans', Arial, Helvetica, sans-serif; margin-bottom: 0; margin-top: 0; border-spacing: 0; }

@@ -1,0 +1,32 @@
+
+div.pseudo; {
+    display: table;
+    table-layout: fixed;
+    width: 100%; /* anything but auto, otherwise fixed layout not guaranteed */
+    white-space: pre-wrap;
+}
+div.pseudo::before {
+    counter-reset: linenum;
+}
+div.pseudo span.tr {
+    display: table-row;
+    counter-increment: linenum;
+}
+div.pseudo span.th { /* used for line numbers */
+    display: table-cell;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+}
+div.pseudo span.th::before {
+    content: counter(linenum);
+    text-align: right;
+    display: block;
+}
+div.pseudo span.th {
+    width: 4em; /* or whatever the desired width of the numbers column is */
+}
+div.pseudo span.td {
+    display: table-cell;
+}
+
