@@ -40,8 +40,8 @@ module Inf7
       Inf7::Template.write(:extension_source, formatted_path(dest_dir_root), ext: self)
     end
 
-    def pp_html
-      Inf7::Template[:extension_source].render(ext: self)
+    def pp_html(standalone: false)
+      Inf7::Template[standalone ? :standalone_extension : :extension_source].render(ext: self)
     end
     
     def i7x(mode, downcase: false)

@@ -23,7 +23,7 @@
   <% else -%>
     <% if line.match(/\A(?:<[^>]+>)?(\s|&ensp;)*Table\s+(?:of|\d+(?:\.\d+)?)\b/) %>
       <% in_table = true -%>
-      <span class="tr tablehead"><span class="th<% if line_nos %> line_no" id="line<%= j %><% end %>"></span><span class="td line"><%== line.empty? ? '&ensp;' : line %></span></span></div><div class="pseudo tabletable">
+      <span class="tr tablehead"><span class="th<% if line_nos %> line_no" id="line<%= j %><% end %>"></span><span class="td line"><%== line.sub(/\A(\s|&ensp;)*/,'') %></span></span></div><div class="pseudo tabletable">
     <% else -%>
       <span class="tr"><span class="th<% if line_nos %> line_no" id="line<%= j %><% end %>"></span><span class="td line"><%== line.empty? ? '&ensp;' : line %></span></span>
     <% end -%>

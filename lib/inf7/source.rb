@@ -9,7 +9,7 @@ module Inf7
     def self.pretty_print(filename, options)
       source = filename.end_with?('.i7x') ? Inf7::Extension.new(filename) : Inf7::Source.new(filename)
       if options[:html] # and Inf7::Conf.conf[:i7tohtml] and check_executable(Inf7::Conf.conf[:i7tohtml])
-        puts source.pp_html
+        puts source.pp_html(standalone: true)
       else
         source.text_prettyprint(options)
       end
