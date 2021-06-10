@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+body {
+    color: #000;
+background-color: #FAFAF0; 
+font-family:  'Public Sans', Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: auto;
+}
+
+html { font-size: 100%; }
+
+.inform7-source   {  counter-reset: linenum; margin-top: 3rem; }
+
+div.pseudo; {
+    display: table;
+    table-layout: fixed;
+    width: 100%; /* anything but auto, otherwise fixed layout not guaranteed */
+    white-space: pre-wrap;
+}
+
+div.pseudo span.tr {
+    display: table-row;
+    counter-increment: linenum;
+}
+div.pseudo span.th {
+    display: table-cell;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    padding-right: .5rem;
+    margin-right: .5rem;
+    width: 3rem; /* or whatever the desired width of the numbers column is */
+}
+div.pseudo span.line_no::before {
+    content: counter(linenum);
+    text-align: right;
+    display: block;
+    font-family: monospace;
+    font-weight: normal;
+}
+div.pseudo span.th {
+}
+
+div.pseudo span.td {
+    display: table-cell;
+    padding-left: .5rem;
+    padding-right: .5rem;
+    }
+
+div.tabletable {
+border-collapse: collapse;
+}
+
+div.tabletable span.td
+{    border: .1rem solid black;
+border-collapse: collapse;
+}
+
+span.tablehead { font-weight: bold; }
+
+.i7cm {
+  color: #207D20;
+}
+.i7c1 {
+  font-family: monospace;
+  color: #207D20;
+}
+.i7gh {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+.i7si {
+  font-style: italic;
+  color: #4E54FB;
+}
+.i7s2 {
+  font-weight: bold;
+  color: #095097;
+}
+.i7sx {
+  font-family: monospace;
+  font-weight: bold;
+  color: #095097;
+}
+.i7x {
+  font-family: monospace;
+}

@@ -83,7 +83,7 @@ module Inf7
     def self.census(options)
       Dir.mktmpdir do |tmpdir|
         project = Inf7::Project.new(tmpdir, options.merge( { top: true, allow_prior_existence: true }))
-        project.census(temp: true, **options)
+        project.census(**options)
       end
     end
 
@@ -157,7 +157,7 @@ module Inf7
         stdout, stderr, rc = Open3.capture3(ni, *args)
         if rc.exitstatus.zero?
           report stdout unless opt(:quiet)
-          update_extension_docs(temp: temp, census: true, **options) # passes on --force if present
+          update_extension_docs(census: true, **options) # passes on --force if present
         else
           STDERR.puts(stderr)
         end
@@ -173,27 +173,37 @@ module Inf7
     def update_extension_docs(temp: false, census: false, **options)
       @conf[:force] = true if options[:force]
       i7tohtml = check_executable(:i7tohtml)
-#      ext_dirs =  [ opt(:external), File.join(opt(:internal), 'Extensions') ]
+      ext_dir_info = [ { name: :external, dir: opt(:external), doc_dir: Inf7::Conf.ext },
+                       { name: :internal, dir: File.join(opt(:internal), 'Extensions'), doc_dir: Inf7::Conf.ext },
+                     ]
+      #      ext_dirs =  [ opt(:external), File.join(opt(:internal), 'Extensions') ]
       project_ext_doc_dir = File.join(@index_root, 'doc')
-      ext_dirs = {}
-      ext_dirs[@extensions_dir] = project_ext_doc_dir if !temp and !census
-      ext_dirs[opt(:external)] = Inf7::Conf.ext
-      ext_dirs[File.join(opt(:internal), 'Extensions')] = Inf7::Conf.ext
+      ext_dir_info.unshift({name: :project, dir: @extensions_dir, doc_dir: File.join(@index_root, 'doc') }) if !census
+
       @extension_locations = Hash.new {|h,k| h[k] = {} }
-      ext_dirs.each_pair do |ext_dir, ext_doc_dir|
+      ext_dir_info.each do |ext_dir_hash|
+        ext_dir = ext_dir_hash[:dir]
+        ext_doc_dir = ext_dir_hash[:doc_dir]
         Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
           ext_obj = Inf7::Extension.new(extension)
           destination = ext_obj.formatted_path(ext_doc_dir)
-          # if project, do internal, external if they don't exist; don't do if they
-          # exist and are not up to date even with project --force. do it with census --force.
-          unless up_to_date(extension, destination) and !(@extension_locations.key?(ext_obj.author_dir.downcase) and @extension_locations[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] == destination)
+          if !File.exist?(destination)
             ext_obj.write_html(ext_doc_dir, i7tohtml)
-            puts "Writing #{ext_obj.formatted_path(ext_doc_dir)}" if opt(:verbose)
+          else
+            # if project, do internal, external if they don't exist; don't do if they
+            # exist and are not up to date even with project --force. do it with census --force.
+            if :project == ext_dir_hash[:name] or (:project != ext_dir_hash[:name] and census)
+              unless up_to_date(extension, destination) and !(@extension_locations.key?(ext_obj.author_dir.downcase) and @extension_locations[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] == destination)
+                ext_obj.write_html(ext_doc_dir, i7tohtml)
+              end
+            end
           end
           @extension_locations[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] ||= destination
         end
       end
-      transform_html(File.join(opt(:external), 'Documentation', 'Extensions.html'), File.join(project_ext_doc_dir, 'Extensions.html'), ext_transform: true) unless temp
+      %w{ Extensions ExtIndex }.each do |file|
+        transform_html(File.join(opt(:external), 'Documentation', "#{file}.html"), File.join(project_ext_doc_dir, "#{file}.html"), ext_transform: true) unless temp
+      end
     end
 
     def create_extension
@@ -202,6 +212,7 @@ module Inf7
       ext_name = opt(:name).sub(/\.i7x\Z/,'')
       Optimist.die("name required") if ext_name.empty?
       filename = "#{File.join(@extensions_dir, ext_author, ext_name)}.i7x"
+      Optimist.die("#{filename} already exists") if File.exist?(filename)
       Inf7::Template.write(:extension, filename, name: opt(:name), author: ext_author)
       report "Created #{filename}. You must manually include it."
     end
@@ -369,31 +380,37 @@ module Inf7
       Inf7::Project.print_settings(options, rc)
     end
 
+    def transformed_extension(string)
+      beginning, anchor = string.match(/\A([^#]+)(#.*)?\Z/).captures
+      anchor ||= ""
+                 target = CGI.unescape(string.sub(/\A(\/Extensions)?\/Extensions\//,'')).downcase
+                 author, ext_name = target.split(%r{/})
+                 ext_name = File.basename(ext_name, '.html')
+                 "file://#{@extension_locations[author.downcase][ext_name.downcase]}?#{query_arg}#{anchor}"
+    end
+    
     def deform(string)
       beginning, anchor = string.match(/\A([^#]+)(#.*)?\Z/).captures
       anchor ||= ""
       result = case string
-      when /index\.html/
-        "file://#{Inf7::Conf.doc}/index.html?#{query_arg}#{anchor}"
-      when /Extensions\/(Extensions|ExtIndex)\.html/
-        "file://#{@index_root}/doc/#{$1}.html?#{query_arg}#{anchor}"
-      when /^\/Extensions/
-        target = CGI.unescape(string.sub(/\A\/Extensions\/Extensions\//,'')).downcase
-        author, ext_name = target.split(%r{/})
-        ext_name = File.basename(ext_name, '.html')
-        "file://#{@extension_locations[author.downcase][ext_name.downcase]}?#{query_arg}#{anchor}"
-      when /(R?doc\d+\.html)/
-#        puts "#{string} #{$1}"
-        res = "file://#{Inf7::Conf.doc}/#{Inf7::Doc.links[$1][:file]}?#{query_arg}##{Inf7::Doc.links[$1][:anchor]}"
-#        res = "file://#{Inf7::Conf.doc}/#{Inf7::Doc.links.key?($1) ? [Inf7::Doc.links[$1][:file],Inf7::Doc.links[$1][:anchor]].join('#') : 'xyzzyplugh'}"
-#        res = [Inf7::Doc.links[$1][:file],Inf7::Doc.links[$1][:anchor]].join('#') 
-#        res = "#{Inf7::Doc.links[$1][:file]}?#{query_arg}##{Inf7::Doc.links[$1][:anchor]}"
-        res
-      else
-        res ="file://#{Inf7::Conf.doc}/#{beginning}?#{query_arg}#{anchor}"
-#        puts res
-        res
-      end
+               when /index\.html/
+                 "file://#{Inf7::Conf.doc}/index.html?#{query_arg}#{anchor}"
+               when /Extensions\/(Extensions|ExtIndex)\.html/
+                 "file://#{@index_root}/doc/#{$1}.html?#{query_arg}#{anchor}"
+               when /^\/Extensions/
+                 transformed_extension(string)
+               when /(R?doc\d+\.html)/
+                 #        puts "#{string} #{$1}"
+                 res = Inf7::Doc.links.key?($1) ? "file://#{Inf7::Conf.doc}/#{Inf7::Doc.links[$1][:file]}?#{query_arg}##{Inf7::Doc.links[$1][:anchor]}" : "dummy"
+                 #        res = "file://#{Inf7::Conf.doc}/#{Inf7::Doc.links.key?($1) ? [Inf7::Doc.links[$1][:file],Inf7::Doc.links[$1][:anchor]].join('#') : 'xyzzyplugh'}"
+                 #        res = [Inf7::Doc.links[$1][:file],Inf7::Doc.links[$1][:anchor]].join('#') 
+                 #        res = "#{Inf7::Doc.links[$1][:file]}?#{query_arg}##{Inf7::Doc.links[$1][:anchor]}"
+                 res
+               else
+                 res ="file://#{Inf7::Conf.doc}/#{beginning}?#{query_arg}#{anchor}"
+                 #        puts res
+                 res
+               end
     end
 
     def query_arg
@@ -408,6 +425,9 @@ module Inf7
       @copycode ||= Inf7::Template[:copycode].render
       FileUtils.mkdir_p(File.dirname(outfile))
       contents = File.read(infile)
+      contents.gsub!(%r{<a href=["']Extensions/(.*?)\.html}) do |m|
+        "<a href='#{transformed_extension($1)}"
+      end
       contents.sub!(%r{</style>}, %Q{</style><link rel="stylesheet" href="file://#{Inf7::Conf.doc}/style.css">})
       contents.sub!(%r{<body>}, '<body class="the_transformed">')
       contents.gsub!(%r{"inform:/([^"]+)"}) {|match| %Q{"#{deform($1)}"} }
@@ -415,6 +435,7 @@ module Inf7
       contents.gsub!(%r{inform:/([^\s>]+)}) {|match| deform($1) }
       contents.gsub!(/source:story\.ni/, "file://#{File.join(@index_root, 'story.html')}")
       contents.gsub!(/function pasteCode/,"#{@copycode} function pasteCode");
+      contents.gsub!(/<p style='margin:0px; padding:0px;'>/,'<p>')
       contents.gsub!(/"javascript:pasteCode\('([^']+)'\)"/) do |m|
         %Q{"javascript:copyCode(`#{Inf7::Doc.fix_javascript($1)}`)"}
       end
@@ -445,11 +466,11 @@ module Inf7
     end
 
     def play(options={})
-          if opt(:zterp) and (('zcode' == options[:format]) || ('zcode' == opt(:format)))
-            system(opt(:zterp), (!options[:temp] && up_to_date(blorb, output, override: true)) ? blorb : output)
-          elsif opt(:gterp) and (('glulx' == options[:format]) || ('glulx' == opt(:format)))
-            system(opt(:gterp), (!options[:temp] && up_to_date(blorb, output, override: true)) ? blorb : output)
-          end
+      if opt(:zterp) and (('zcode' == options[:format]) || ('zcode' == opt(:format)))
+        system(opt(:zterp), (!options[:temp] && up_to_date(blorb, output, override: true)) ? blorb : output)
+      elsif opt(:gterp) and (('glulx' == options[:format]) || ('glulx' == opt(:format)))
+        system(opt(:gterp), (!options[:temp] && up_to_date(blorb, output, override: true)) ? blorb : output)
+      end
     end
 
     
@@ -457,11 +478,11 @@ module Inf7
       if compile_ni(options)
         if compile_inform6(options)
           compile_cblorb(options)
-#          FileUtils.cp_r("/home/zed/src/ruby/inf7bundlegem/inf7/parchment", @build) unless File.exist?(@build.join('parchment'))
-#          Inf7::Template.write(:play, @build.join('parchment', 'play.html'), name: @name, author: @author, navbar: @navbar)
-#          File.open(@build.join('parchment','interpreter',"#{@name}.gblorb.js"), 'w') do |file|
-#            file.write("$(document).ready(function() { GiLoad.load_run(null, '#{ Base64.strict_encode64(File.read(output)) }', 'base64');});")
-#          end
+          #          FileUtils.cp_r("/home/zed/src/ruby/inf7bundlegem/inf7/parchment", @build) unless File.exist?(@build.join('parchment'))
+          #          Inf7::Template.write(:play, @build.join('parchment', 'play.html'), name: @name, author: @author, navbar: @navbar)
+          #          File.open(@build.join('parchment','interpreter',"#{@name}.gblorb.js"), 'w') do |file|
+          #            file.write("$(document).ready(function() { GiLoad.load_run(null, '#{ Base64.strict_encode64(File.read(output)) }', 'base64');});")
+          #          end
           play(options)
         end
       elsif opt(:browser) and File.exist?(@build.join('problems.html'))
@@ -504,7 +525,7 @@ module Inf7
 
     def check_executable(name)
       opt(name) || Inf7::Project.check_executable(name)
-#      opt(name) || (TTY::Which.exist?(executable_name(name)) ? TTY::Which.which(executable_name(name)) : nil)
+      #      opt(name) || (TTY::Which.exist?(executable_name(name)) ? TTY::Which.which(executable_name(name)) : nil)
     end
 
     def update
@@ -557,9 +578,8 @@ module Inf7
     end
 
     def compile_ni(options)
-      @conf[:format] = options[:format] if options[:format]
+      @conf = @conf.merge(options)
       ni = check_executable_or_die(:ni)
-      @conf[:force] ||= options[:force]
       @verbose ||= options[:verbose]
       @quiet ||= options[:quiet]
       arg_list = []
@@ -567,12 +587,19 @@ module Inf7
       arg_list << i7flags if !i7flags.empty?
       { nobble_rng: :rng, release: :release }.each_pair {|k,v| arg_list << "--#{v}" if opt(k) }
       %i{ index progress }.each {|s| arg_list << "--no#{s}" if !opt(s) }
-      arg_list += [ '--internal', opt(:internal), '--external', opt(:external), '--project', dir.to_s ]
+      tmpdir = nil
+      if opt(:external)
+        external = opt(:external)
+      else
+        tmpdir = Dir.mktmpdir
+        external = tmpdir
+      end
+      
+      arg_list += [ '--internal', opt(:internal), '--external', external, '--project', dir.to_s ]
       arg_list << "--format=z8" if (options[:format] == 'zcode') or (opt(:format) == 'zcode')
       report ([ni]+arg_list).join(' ')
-      FileUtils.mkdir_p(opt(:external))
       stdout, stderr, rc = Open3.capture3(ni, *arg_list)
-
+      FileUtils.rm_rf(tmpdir) if tmpdir
       @navbar = Inf7::Template[:index_navbar].render(index_root: @index_root, build: @build.to_s, query_arg: query_arg)
 
       unless options[:temp]
@@ -589,7 +616,7 @@ module Inf7
         
       end
       if rc.exitstatus and rc.exitstatus.zero? # on SIGSEGV exitstatus is nil
-        update_extension_docs(temp: options[:temp])
+        update_extension_docs unless options[:temp]
         out_lines = stdout.split($/)
         out_lines[1].match(/source text, which is (\d+) words long\./)
         word_count = $1
@@ -611,18 +638,18 @@ module Inf7
     def compile_inform6(options)
       report # output newline
       i6flags_arg = options[:i6flags] ? options[:i6flags] : (options[:release] ? opt(:i6flagsrelease) : opt(:i6flagstest))
-        inform6 = check_executable_or_die(:inform6)
-        report "#{inform6} #{i6flags_arg}#{i6flag(options)} #{inf} #{output}"
-        stdout, stderr, rc = Open3.capture3(inform6, "#{i6flags_arg}#{i6flag(options)}", inf.to_s, output.to_s)
-        if rc.exitstatus and rc.exitstatus.zero?
-          report @verbose ? stdout : stdout.split($/).select {|l| l.match(/\A(Inform|In:|Out:)/) }.join("\n")
-        else
-          STDERR.write(stdout) if stdout
-          STDERR.write(stderr) if stderr
-          return false
-        end
-        make_fakes if @conf[:fake]
-        return true
+      inform6 = check_executable_or_die(:inform6)
+      report "#{inform6} #{i6flags_arg}#{i6flag(options)} #{inf} #{output}"
+      stdout, stderr, rc = Open3.capture3(inform6, "#{i6flags_arg}#{i6flag(options)}", inf.to_s, output.to_s)
+      if rc.exitstatus and rc.exitstatus.zero?
+        report @verbose ? stdout : stdout.split($/).select {|l| l.match(/\A(Inform|In:|Out:)/) }.join("\n")
+      else
+        STDERR.write(stdout) if stdout
+        STDERR.write(stderr) if stderr
+        return false
+      end
+      make_fakes if @conf[:fake]
+      return true
     end
 
     def compile_cblorb(options)

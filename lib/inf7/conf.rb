@@ -105,9 +105,9 @@ module Inf7
       def create(conf)
         raise RuntimeError.new("#{@file} already exists") if File.exist?(@file)
         @conf = conf
-        raise RuntimeError.new("$HOME not set; you must specify --external") unless @conf.key?(:external) or ENV.key?('HOME')
-        @conf[:external] ||= File.join(ENV['HOME'], 'Inform')
-        raise RuntimeError.new("#{@conf[:external]} must be a writable directory") unless Dir.exist?(@conf[:external]) and File.writable?(@conf[:external])
+#        raise RuntimeError.new("$HOME not set; you must specify --external") unless @conf.key?(:external) or ENV.key?('HOME')
+#        @conf[:external] ||= File.join(ENV['HOME'], 'Inform')
+#        raise RuntimeError.new("#{@conf[:external]} must be a writable directory") unless Dir.exist?(@conf[:external]) and File.writable?(@conf[:external])
         download if @conf[:download]
 
         @conf = Inf7::Conf.absolutify(@conf)

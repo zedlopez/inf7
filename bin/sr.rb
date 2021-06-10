@@ -2,15 +2,14 @@
 
 require 'inf7'
 require 'pp'
-sr = Inf7::Extension.new('/home/zed/.local/share/inf7/Internal/Extensions/Graham Nelson/Standard Rules.i7x')
+sr = Inf7::Extension.new(ARGV.shift)
 
-#mod_lines = []
 hash = {}
 
-parts = Hash.new {|h,k| h[k] = {} }
-current_part = nil
-
-callouts = {}
+hierarch = {}
+cur_part = nil
+cur_sect = nil
+cur_sub_sect = nil
 sr.lines.dup.each.with_index(1) do |line, i|
   case line
   when /\ADocument\s+(.*)\s+at\s+(\S+)\s+"([^"]+)"\s+"([^"]+)"\.\Z/
@@ -19,63 +18,70 @@ sr.lines.dup.each.with_index(1) do |line, i|
     ch, sect = ch_sect.split(/\./)
     refs.each {|r| hash[r] = %Q{<a href="http://inform7.com/book/WI_#{ch}_#{sect}.html">#{r}</a>}}
   when /\A(Part)/
-    current_part = parts[line.chomp]
-    callouts[i] = { part: line.chomp }
+    hierarch[ line.chomp ] = { line: i, sections: {}}
+    cur_part = line.chomp 
   when /\ASection(?:[^\/]+)\/(\S+)\s+\-\s+(.*)\Z/
-    current_part[$1] = [ $2, i ]
-    callouts[i] = { section: "#{$1} #{$2}" }
+    raw_sect = $1
+    name = $2
+    if raw_sect.match(/(\d+)\/(\d+)/)
+      cur_sect = $1
+      sub_sect = $2
+      cur_sub_sect = sub_sect
+      name.match(/\A(.*?)\s+-\s+(.*)/)
+      cur_sect_name = $1
+      sub_sect_name = $2
+      hierarch[cur_part][:sections][cur_sect] ||= { subsections: {}, line: i, name: cur_sect_name }
+      hierarch[cur_part][:sections][cur_sect][:subsections][cur_sub_sect] = { name: sub_sect_name, actions: {}, line: i }
+    else
+      cur_sect = raw_sect
+      hierarch[cur_part][:sections][cur_sect] = { name: name, actions: {}, line: i}
+    end
+      
   when /\A(.*?)\s+is an action (?:applying|out of world)/
-    callouts[i] = { action: $1 }
+    if cur_sub_sect
+      hierarch[cur_part][:sections][cur_sect][:subsections][cur_sub_sect][:actions][$1] = { line: i }
+    else
+      hierarch[cur_part][:sections][cur_sect][:actions][$1] = i
+    end
   end
 end
-
-#@content = mod_lines.join($/)
 
 html = sr.pp_html(standalone: true).split($/)
 
-def toc(callouts)
-  in_action = false
-  in_part = false
-  in_section = false
-  puts '<div class="toc">'
-  callouts.each_pair do |line_num,hash|
-    hash.each_pair do |k,v|
-      if in_action and :action != k
-        in_action = false
-        puts "</details>"
-      end
-      case k
-      when :part
-        puts "</details>" if in_part
-        in_part = true
-        puts "</ul>" if in_section
-        in_section = false
-        puts "<details><summary>#{v}</summary>"
-        puts %Q{<a href="#line#{line_num}">#{v}</a><br>}
-      when :section
-        puts "<ul>" unless in_section
-        in_section = true
-        puts %Q{<li><a href="#line#{line_num}">#{v}</a></li>}
-      when :action
-        if !in_action
-          puts %Q{<details><summary>Actions</summary>}
-          in_action = true
+def toc(hierarch)
+  puts %Q{<h1 style="text-align: center;">Standard Rules by Graham Nelson</h1>}
+  puts %Q{<h2 style="text-align: center;">Version 3/120430 for Inform 7 6M62</h2>}
+  puts %Q{<div>The Standard Rules are &copy; Graham Nelson and published under the <a href="https://github.com/zedlopez/standard_rules/blob/main/LICENSE.md">Artistic License 2.0</a>.</div>}
+  puts %Q{<div class="toc" style="margin: 3rem;">}
+  hierarch.each_pair do |part, part_hash|
+    puts "<details><summary><strong>#{part}</strong></summary><ul>"
+    part_hash[:sections].each_pair do |section, sect_hash|
+      unless sect_hash.key?(:subsections)
+        puts %Q{<li>#{section}. <a href="#line#{sect_hash[:line]}">#{sect_hash[:name]}</a></li>}
+        unless sect_hash[:actions].empty?
+          puts "<details><summary>Actions</summary><ul>"
+          sect_hash[:actions].each_pair do |action, line|
+            puts %Q{<li><a href="#line#{line}">#{action}</a></li>}
+          end
+          puts "</ul></details>"
         end
-        puts %Q{&emsp;&emsp;<a href="#line#{line_num}">#{v}</a><br>}
+      else
+        puts %Q{<details><summary>#{section}. #{sect_hash[:name]}</summary><ul>}
+        sect_hash[:subsections].each_pair do |sub_sect, sub_sect_hash|
+          puts %Q{<li><a href="#line#{sub_sect_hash[:line]}">#{sub_sect} #{sub_sect_hash[:name]}</a></li>}
+        end
+        puts "</ul></details>"
       end
     end
+    puts "</ul></details>"
   end
-  puts "</div>"              
-
-
-                  
+  puts "</div>"
 end
-
 
 html.each do |line|
   case line
   when /<!--\s+toc\s+-->/
-    puts toc(callouts)
+    puts toc(hierarch)
   when /documented\s+at\s+([-_\w]+)/
     ref = $1
     puts line.sub(ref, hash[ref])

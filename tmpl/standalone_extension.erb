@@ -1,0 +1,16 @@
+<!doctype html>
+<html><head>
+<style>
+<%== Inf7::Template[:source_code_css].render %>
+</style>
+<title><%= ext.name %></title></head>
+<body>
+<!-- toc -->
+<div class="pseudo">
+<% if ext.documentation %>
+<%== Inf7::Template[:source_code_generic].render(lines: ext.documentation, line_nos: false, example_pasties: ext.example_pasties, name: ext.name) %></div><% end -%>
+<div class="inform7-source pseudo">
+<%== Inf7::Template[:source_code_generic].render(lines: ext.code, line_nos: true) %>
+</div>
+<footer></footer>
+</body></html>
