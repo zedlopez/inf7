@@ -119,7 +119,7 @@ $ inf7 setup --author "Zed Lopez" --arch armv6lhf --download
 
 Non-Linux users may use '--download' and it'll install an Internal directory appropriately, but you're on your own to ensure your system has ni, inform6, and cBlorb binaries. (You can specify the locations of ni, inform6, and cBlorb explicitly, but if they're in your PATH you don't have to (see Executables below). 
 
-If you don't want your external dir to default to "$HOME/Inform" specify it with '--external'. (Windows users will want to do this.)
+You will probably want to assign --external, but you don't have to: if undefined, a temp directory will be used. This does mean that you'll take the time hit every time of ni generating the HTML pages for the Internal extensions. (inf7 won't transform them.)
 
 ```
 $ inf7 setup --author "Zed Lopez" --download --external /home/zed/projects/inform

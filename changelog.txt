@@ -1,6 +1,10 @@
-0.2.0
-      
-      pp command, and improved formatting
+0.2.1 improved project index restyling
+      No longer defaults to $HOME/Inform for external, nor require external. If not defined, use a temp dir
+      fixed bug by which compile wasn't using all its options
+      always create html for extensions if they don't exist, independent of other factors
+      process ExtIndex.html; add to menu as 'definitions'
+      redo formatting of source. line numbers via css, only use table elements for Inform tables
+0.2.0 pp command, and improved formatting
       census command, and more sensible updating choices
       update command
       reduce the waste of time and space of rebuilding all extensions on per project basis

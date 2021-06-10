@@ -189,11 +189,14 @@ module Inf7
           destination = ext_obj.formatted_path(ext_doc_dir)
           if !File.exist?(destination)
             ext_obj.write_html(ext_doc_dir, i7tohtml)
+            report "Writing #{destination}"
           else
             # if project, do internal, external if they don't exist; don't do if they
             # exist and are not up to date even with project --force. do it with census --force.
             if :project == ext_dir_hash[:name] or (:project != ext_dir_hash[:name] and census)
               unless up_to_date(extension, destination) and !(@extension_locations.key?(ext_obj.author_dir.downcase) and @extension_locations[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] == destination)
+                report "Writing #{destination}"
+
                 ext_obj.write_html(ext_doc_dir, i7tohtml)
               end
             end
@@ -201,8 +204,10 @@ module Inf7
           @extension_locations[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] ||= destination
         end
       end
+      unless census
       %w{ Extensions ExtIndex }.each do |file|
         transform_html(File.join(opt(:external), 'Documentation', "#{file}.html"), File.join(project_ext_doc_dir, "#{file}.html"), ext_transform: true) unless temp
+      end
       end
     end
 
@@ -446,7 +451,8 @@ module Inf7
       end
       node = Nokogiri::HTML(contents)
       navbar_div = Inf7::Doc::Doc.create_element('div')
-      navbar_div.inner_html = @navbar
+      @navbar_trunc ||= @navbar || Inf7::Template[:index_truncated].render(index_root: @index_root, build: @build.to_s)
+      navbar_div.inner_html = @navbar_trunc
       node.at_css('body').first_element_child.before(navbar_div)
       File.open(outfile, 'w') {|f| f.write(Inf7::Doc.to_html(node, :chapter, :html)) }
     end
@@ -599,7 +605,6 @@ module Inf7
       arg_list << "--format=z8" if (options[:format] == 'zcode') or (opt(:format) == 'zcode')
       report ([ni]+arg_list).join(' ')
       stdout, stderr, rc = Open3.capture3(ni, *arg_list)
-      FileUtils.rm_rf(tmpdir) if tmpdir
       @navbar = Inf7::Template[:index_navbar].render(index_root: @index_root, build: @build.to_s, query_arg: query_arg)
 
       unless options[:temp]
@@ -616,7 +621,7 @@ module Inf7
         
       end
       if rc.exitstatus and rc.exitstatus.zero? # on SIGSEGV exitstatus is nil
-        update_extension_docs unless options[:temp]
+        update_extension_docs(force: options[:force]) unless options[:temp]
         out_lines = stdout.split($/)
         out_lines[1].match(/source text, which is (\d+) words long\./)
         word_count = $1
@@ -629,9 +634,11 @@ module Inf7
         STDERR.puts(stdout) if stdout
         STDERR.puts(stderr) if stderr
         # error_count = stdout ? (stdout.split(%r{#{$/}\s+>-->\s+}).count - 1) : 0
+        FileUtils.rm_rf(tmpdir) if tmpdir
         return false
       end
       make_fakes if @conf[:fake]
+      FileUtils.rm_rf(tmpdir) if tmpdir
       return true
     end
 
