@@ -6,13 +6,20 @@ require 'tabulo'
 module Inf7
   class Source
     extend Inf7
-    def self.pretty_print(filename, options)
-      source = filename.end_with?('.i7x') ? Inf7::Extension.new(filename) : Inf7::Source.new(filename)
-      if options[:html] # and Inf7::Conf.conf[:i7tohtml] and check_executable(Inf7::Conf.conf[:i7tohtml])
-        puts source.pp_html(standalone: true)
+    def self.[](filename)
+      case filename
+      when %r{Graham Nelson/Standard Rules.i7x\Z}
+        Inf7::Extension::StandardRules.new(filename)
+      when %r{.i7x\Z}
+        Inf7::Extension.new(filename)
       else
-        source.text_prettyprint(options)
+        Inf7::Source.new(filename)
       end
+    end
+    
+    def self.pretty_print(filename, options)
+      source = Source[filename]
+      puts options[:html] ? source.pp_html(standalone: true) : source.text_prettyprint(options)
     end
 
     def pp_html
@@ -27,25 +34,6 @@ module Inf7
       content.split($/)
     end
 
-    # def table_render(table, width)
-
-    #   multi_renderer = TTY::Table::Renderer::Basic.new(table, multiline: true, width: TTY::Screen.cols)
-    #   puts multi_renderer.render
-    #   return
-      
-
-      
-    #   basic_rendering = table.render(:basic, resize: true)
-    #   basic_width = basic_rendering.split($/).map(&:length).max
-    #   puts basic_width
-    #   if basic_width > width and basic_width <= TTY::Screen.cols
-    #     pp basic_rendering
-    #     puts basic_rendering
-    #   else
-    #     puts table.render(:basic, resize: true, width: TTY::Screen.cols)
-    #   end
-    # end
-    
     def text_prettyprint(options = {})
       table_rows = nil
       max_width = 0
@@ -58,32 +46,10 @@ module Inf7
           table_rows << row
           next
         elsif table_rows
-          table_rows = table_rows.map {|r| r+=[""]*(max_width-r.count)}# .render(:basic, resize: true, multiline: true,  width: TTY::Screen.cols)
+          table_rows = table_rows.map {|r| r+=[""]*(max_width-r.count)}
           table = TTY::Table.new(rows: table_rows)
-          rendered = table.render(:unicode, width: 999999)
-          table_width = rendered.split($/).first.length
-#           puts table_width
-#           puts rendered
-#           pp table_rows
-#           puts max_width
-
-
-          
-# columns = (0..max_width-1).to_a.map { |i| table_rows.map{|r| r[i]  } }
-
-
-          
-
-          
-#           col_widths = table_rows.map {|r| r.map {|c| [ c.length, c.split(/\s+/).map(&:length).max ] } }
-#           pp col_widths
-          
-          # recursive algorithm: find widest column. Either cut it in half or set to width of its longest word, whichever is longer. if table still too wide, repeat.
-          # when all columns have no lines with spaces that are longer than that column's longest word we've gone as far as we can.
-          
-
-          
-#          puts table_render(TTY::Table.new(rows: table_rows.map {|r| r+=[""]*(max_width-r.count)}),screen_width)
+          #          rendered = table.render(:unicode, width: 999999)
+          #          table_width = rendered.split($/).first.length
           table_rows = nil
           max_width = 0
         end

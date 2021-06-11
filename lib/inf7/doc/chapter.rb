@@ -27,7 +27,8 @@ module Inf7
       "#{[ @volume.abbrev.downcase, @num ].join('_')}.html"
     end
 
-    def url(single = true)
+    def url(single = true, section_num: nil)
+      return "#{output_filename}##{@volume.abbrev.downcase}-#{@num}.#{section_num}" if section_num
       single ? "#{output_filename}##{href}" : href
     end
 

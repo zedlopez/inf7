@@ -1,5 +1,9 @@
 module Inf7::DocUtil
 
+  def inform7link(vol = @volume.abbrev, ch = @chapter.num, sect = @num)
+    "http://inform7.com/book/#{vol}_#{ch}_#{sect}.html"
+  end
+
   def anchorify(*list)
     list.map(&:to_s).map(&:downcase).join(' ').strip.gsub(/[^-\.\w]/,'-').gsub(/-+/,'-')
   end

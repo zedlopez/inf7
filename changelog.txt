@@ -1,4 +1,6 @@
-0.2.1 improved project index restyling
+0.2.1 include TOC and internal doc links for Standard Rules
+      on setup, automatically update Quixe and Parchment
+      improved project index restyling
       No longer defaults to $HOME/Inform for external, nor require external. If not defined, use a temp dir
       fixed bug by which compile wasn't using all its options
       always create html for extensions if they don't exist, independent of other factors

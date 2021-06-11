@@ -49,14 +49,27 @@ module Inf7
         end
       end
 
-      def fetch_and_save(uri, output_file)
+      def fetch_and_save(url, output_file)
         unless File.exist?(output_file) and !File.size(output_file).zero?
-          download = fetch(hash[:url])
+          download = fetch(url)
           raise RuntimeError.new("Couldn't download #{hash[:url]}") unless download
           File.open(output_file, 'w') {|f| f.write(download) }
         end
       end
 
+      def download_templates
+        template_dir =  File.join(@conf[:external], 'Templates')
+        FileUtils.mkdir_p(template_dir)
+        %i{ quixe parchment }.each do |template_sym|
+          name = template_sym.to_s.capitalize
+          dir = File.join(@conf[:external], name)
+          next if File.exist?(File.join(template_dir, name))
+          zipfile = File.join(@archives, "#{name}.zip")
+          fetch_and_save(Inf7::Downloads[template_sym][:url], zipfile)
+          system('unzip', '-d', template_dir, zipfile)
+        end
+      end
+      
       def download
         Inf7::Downloads.each_pair do |label, hash|
           next if (:cli == label) and 
@@ -74,6 +87,10 @@ module Inf7
         @conf[:resources] = File.join(@conf[:internal], 'Resources')
         @conf[:docs] = File.join(@conf[:internal], 'Documentation')
 
+        if @conf[:external] and !(@conf.key?(:templates) and !@conf[:templates]) and TTY::Which.which('unzip')
+          download_templates
+        end
+        
         @conf[:arch] ||= Inf7::Project::Defaults[:arch]
         output_file = File.join(@archives, Inf7::Downloads[:cli][:dest])
         fetch_and_save(Inf7::Downloads[:cli][:url], output_file)

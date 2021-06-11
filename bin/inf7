@@ -75,6 +75,8 @@ class Inf
       opt :cheap_zcode, "zcode terp that uses only stdin and stdout", type: :string, short: :none
       opt :zterp, "zcode terp to launch on successful compile", type: :string, short: :none
       opt :gterp, "glulx terp to launch on successful compile", type: :string, short: :none
+      opt :browser, "browser to launch on unsuccessful compile", type: :string, short: :none
+      opt :templates, "Automatically update Quixe and Parchment", default: true
     end
     @subopts.reject! {|k,v| v.nil? or !Inf7::Project::Fields.member?(k) }
     Optimist::die "You must specify either --download or all of --internal, --resources, --docs" unless @subopts[:download] or %i{ internal resources docs }.all? {|x| @subopts[x] }

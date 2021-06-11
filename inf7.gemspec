@@ -1,4 +1,3 @@
-
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "inf7/version"
@@ -42,7 +41,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "erubi", "~> 1.1.0"
   spec.add_dependency "xdg", "~> 5.1.1"
   spec.add_dependency "optimist", "~> 3.0.1"
-#  spec.add_dependency "tty-which", "~> 
   spec.add_dependency "nokogiri", "~> 1.11.7"
   spec.add_dependency "tty-table", "~> 0.12.0"
 

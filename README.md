@@ -121,6 +121,8 @@ Non-Linux users may use '--download' and it'll install an Internal directory app
 
 You will probably want to assign --external, but you don't have to: if undefined, a temp directory will be used. This does mean that you'll take the time hit every time of ni generating the HTML pages for the Internal extensions. (inf7 won't transform them.)
 
+If you specify --download and --external and have an unzip executable in your path and didn't specify --no-templates, setup will also automatically install up-to-date versions of Quixe and Parchment in your External/Templates directory (unless those directories already exist).
+
 ```
 $ inf7 setup --author "Zed Lopez" --download --external /home/zed/projects/inform
 ```
@@ -508,7 +510,7 @@ title                                          subtable (a table name)          
 [...]
 ```
 
-It defaults to plain text, but with the --html option it outputs the source the same way inf7 does when it makes pages. (This may not be that useful given its references to inf7's own css.) This is just for show and shouldn't be used to generate source you intend to work with: it destroys all tabs.
+It defaults to plain text. This is just for show and shouldn't be used to generate source you intend to work with: it destroys all tabs. With the --html option it outputs a stand-alone formatted page (styling is within the document; there are no external dependencies). When this is done with the Standard Rules, you additionally get a table of contents and the "documented at" references link to the relevant pages on the Inform 7 website; this is used to create the [Standard Rules web page](https://zedlopez.github.io/standard_rules/).
 
 ## Setup from an existing installation
 

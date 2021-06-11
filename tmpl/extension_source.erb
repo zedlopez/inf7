@@ -5,9 +5,11 @@
 <title><%= ext.name %></title></head>
 <body>
 <%== Inf7::Template[:index_truncated].render %>
+<%== toc if toc %>
 <div class="pseudo">
-<% if ext.documentation %><span class="tr"><span class="th"></span><span class="td"><a href="javascript:copyCode(`<%= "Include #{ext.name}." %>`)"><img border="0" src="<%= File.join(Inf7::Conf.doc, 'doc_images/paste.png') %>" alt="Copy Include <%= ext.name %> to clipboard"></a> Include <%= ext.name %>.</span></span>
-<%== Inf7::Template[:source_code_generic].render(lines: ext.documentation, line_nos: false, example_pasties: ext.example_pasties, name: ext.name) %></div><% end -%>
+<% unless ext.ubiquitous? %>
+<span class="tr"><span class="th"></span><span class="td"><a href="javascript:copyCode(`<%= "Include #{ext.name}." %>`)"><img border="0" src="<%= File.join(Inf7::Conf.doc, 'doc_images/paste.png') %>" alt="Copy Include <%= ext.name %> to clipboard"></a> Include <%= ext.name %>.</span></span><% end %>
+<% if ext.documentation %><%== Inf7::Template[:source_code_generic].render(lines: ext.documentation, line_nos: false, example_pasties: ext.example_pasties, name: ext.name) %></div><% end -%>
 <div class="inform7-source pseudo">
 <%== Inf7::Template[:source_code_generic].render(lines: ext.code, line_nos: true) %>
 </div>

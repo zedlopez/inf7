@@ -148,10 +148,6 @@ module Inf7
         "#{@volume.abbrev} #{@chapter.num}.#{num}"
       end
 
-      def inform7link(vol = @volume.abbrev, ch = @chapter.rum, sect = @num)
-        "http://inform7.com/book/#{vol}_#{ch}_#{sect}.html"
-      end
-
       def to_html(link_format = :chapter, output_format = :html)
 #        puts "section #{output_format}"
         div = @div.dup

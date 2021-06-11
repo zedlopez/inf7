@@ -185,17 +185,17 @@ module Inf7
         ext_dir = ext_dir_hash[:dir]
         ext_doc_dir = ext_dir_hash[:doc_dir]
         Dir[File.join(ext_dir, '*', '*.i7x')].each do |extension|
-          ext_obj = Inf7::Extension.new(extension)
+          ext_obj = Inf7::Source[extension]
           destination = ext_obj.formatted_path(ext_doc_dir)
           if !File.exist?(destination)
             ext_obj.write_html(ext_doc_dir, i7tohtml)
-            report "Writing #{destination}"
+            report "Writing #{destination}" if @verbose
           else
             # if project, do internal, external if they don't exist; don't do if they
             # exist and are not up to date even with project --force. do it with census --force.
             if :project == ext_dir_hash[:name] or (:project != ext_dir_hash[:name] and census)
               unless up_to_date(extension, destination) and !(@extension_locations.key?(ext_obj.author_dir.downcase) and @extension_locations[ext_obj.author_dir.downcase][ext_obj.ext_name.downcase] == destination)
-                report "Writing #{destination}"
+                report "Writing #{destination}" if @verbose
 
                 ext_obj.write_html(ext_doc_dir, i7tohtml)
               end
