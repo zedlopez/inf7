@@ -31,11 +31,15 @@ module Inf7
   Zcode_to_format = FormatStuff.transform_values {|v| v[:zcode_version] }.invert.transform_values(&:to_s) # 256 => glulx, 8 => zcode
 
     def executable_name(sym)
+      return nil unless sym
       (:cblorb == sym.to_sym) ? 'cBlorb' : sym.to_s
     end
     
     def check_executable(name, candidate: nil) 
-      candidate || (TTY::Which.exist?(executable_name(name)) ? TTY::Which.which(executable_name(name)) : nil)
+	return candidate if candidate
+	exec_name = executable_name(name)
+	return nil unless exec_name	
+	TTY::Which.exist?(executable_name(name)) ? TTY::Which.which(executable_name(name)) : nil
     end
 
 end

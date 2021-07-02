@@ -2,7 +2,7 @@ require 'open3'
 require 'pp'
 require 'tty-table'
 require 'tty-screen'
-require 'tabulo'
+
 module Inf7
   class Source
     extend Inf7

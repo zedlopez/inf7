@@ -1,3 +1,5 @@
+0.2.2 remove requiring of no-longer-used tabulo
+      fixing bug by which it blew up if you didn't setup with i7tohtml specified
 0.2.1 include TOC and internal doc links for Standard Rules
       on setup, automatically update Quixe and Parchment
       improved project index restyling
