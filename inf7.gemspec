@@ -43,5 +43,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "optimist", "~> 3.0.1"
   spec.add_dependency "nokogiri", "~> 1.11.7"
   spec.add_dependency "tty-table", "~> 0.12.0"
+  spec.add_dependency "tty-which", "~> 0.4.0"
 
 end
