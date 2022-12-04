@@ -3,9 +3,9 @@ require 'tty-which'
 module Inf7
   class Error < StandardError; end
   Appname = 'inf7'
-  Downloads = { data: { url: 'https://github.com/ptomato/gnome-inform7/raw/master/data/Inform_6M62_data.tar.lz',
+  Downloads = { data: { url: 'https://github.com/ptomato/inform7-ide/raw/dist-6M62/data/Inform_6M62_data.tar.lz',
                   dest: 'i7_6m62_data.tar.xz', },
-                cli: { url: 'http://inform7.com/apps/6M62/I7_6M62_Linux_all.tar.gz',
+                cli: { url: 'http://emshort.com/inform-app-archive/6M62/I7_6M62_Linux_all.tar.gz',
                        dest: 'i7_6m62.tar.gz', },
                 quixe: { url: 'https://eblong.com/zarf/glulx/quixe/Quixe-220.zip',
                          dest: 'quixe.zip', },
